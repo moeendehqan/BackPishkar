@@ -1,4 +1,4 @@
-from hashlib import new
+
 from persiantools.jdatetime import JalaliDate
 import datetime
 

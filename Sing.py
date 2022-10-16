@@ -15,7 +15,8 @@ def login(data):
     return json.dumps({'replay':True,'Cookie':crypto.encrypt(phone).decode()})
 
 def cookie(data):
-    cookie = str(data['cookie']).encode()
+    try:cookie = str(data['cookie']).encode()
+    except:cookie = str(data).encode()
     cookie = crypto.decrypt(cookie)
     user = pishkarDb['username'].find_one({'phone':cookie},{'_id':0})
     if user==None:

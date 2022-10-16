@@ -1,3 +1,4 @@
+import json
 from flask import Flask, request
 import pymongo
 import pandas as pd
@@ -6,7 +7,9 @@ from flask_cors import CORS
 import management
 import Sing
 import sms
-
+import timedate
+import feesreports
+import assing
 
 warnings.filterwarnings("ignore")
 client = pymongo.MongoClient()
@@ -44,6 +47,38 @@ def management_cunsoltant():
 def management_getcunsoltant():
     data = request.get_json()
     return management.getcunsoltant(data)
+
+@app.route('/management/delcunsoltant',methods = ['POST', 'GET'])
+def management_delcunsoltant():
+    data = request.get_json()
+    return management.delcunsoltant(data)
+#----------------- General -----------------
+@app.route('/general/today',methods = ['POST', 'GET'])
+def general_today():
+    return json.dumps({'today':str(timedate.toDay())})
+#----------------- feesreports -----------------
+@app.route('/feesreports/uploadfile',methods = ['POST', 'GET'])
+def feesreports_uploadfile():
+    date = request.form['date']
+    cookie = request.form['cookie']
+    file =  request.files['feesFile']
+    comp = request.form['comp']
+    return feesreports.uploadfile(date,cookie,file,comp)
+
+@app.route('/feesreports/getfeesuploads',methods = ['POST', 'GET'])
+def feesreports_getfeesuploads():
+    data = request.get_json()
+    return feesreports.getfeesuploads(data)
+
+@app.route('/feesreports/delupload',methods = ['POST', 'GET'])
+def feesreports_delupload():
+    data = request.get_json()
+    return feesreports.delupload(data)
+#----------------- assing -----------------
+@app.route('/assing/get',methods = ['POST', 'GET'])
+def assing_get():
+    data = request.get_json()
+    return assing.get(data)
 
 
 if __name__ == '__main__':

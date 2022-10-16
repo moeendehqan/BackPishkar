@@ -1,14 +1,9 @@
 import json
 import pymongo
-import crypto
-import timedate
-import ast
+import pandas as pd
 from Sing import cookie, ErrorCookie
 client = pymongo.MongoClient()
 pishkarDb = client['pishkar']
-
-
-
 
 
 def profile(data):
@@ -48,6 +43,17 @@ def getcunsoltant(data):
     user = cookie(data)
     user = json.loads(user)
     if user['replay']:
-        pass
+        df = pd.DataFrame(pishkarDb['cunsoltant'].find({'username':user['user']['phone']},{'_id':0}))
+        df = df.to_dict(orient='records')
+        return json.dumps({'replay':True, 'df':df})
+    else:
+        return ErrorCookie()
+
+def delcunsoltant(data):
+    user = cookie(data)
+    user = json.loads(user)
+    if user['replay']:
+        pishkarDb['cunsoltant'].delete_many({'nationalCode':data['nationalCode']})
+        return json.dumps({'replay':True})
     else:
         return ErrorCookie()
