@@ -57,3 +57,43 @@ def delcunsoltant(data):
         return json.dumps({'replay':True})
     else:
         return ErrorCookie()
+
+
+def addinsurer(data):
+    user = cookie(data)
+    user = json.loads(user)
+    username = user['user']['phone']
+    if user['replay']:
+        columns = data['insurer']
+        columns['username'] = username
+        find = pishkarDb['insurer'].find_one({'نام':columns['نام']})==None
+        if find:
+            pishkarDb['insurer'].insert_one(columns)
+            return json.dumps({'replay':True,'msg':'ثبت شده'})
+        else:
+            return json.dumps({'replay':False,'msg':'بیمه گر با این نام قبلا ثبت شده'})
+    else:
+        return ErrorCookie()
+
+
+
+def getinsurer(data):
+    user = cookie(data)
+    user = json.loads(user)
+    username = user['user']['phone']
+    if user['replay']:
+        insurerList = [x['نام'] for x in (pishkarDb['insurer'].find({'username':username},{'_id':0,'نام':1}))]
+        return json.dumps({'replay':True, 'list':insurerList})
+    else:
+        return ErrorCookie()
+    
+def delinsurer(data):
+    user = cookie(data)
+    user = json.loads(user)
+    username = user['user']['phone']
+    if user['replay']:
+        print(data)
+        pishkarDb['insurer'].delete_many({'username':username,'نام':data['name']})
+        return json.dumps({'replay':True})
+    else:
+        return ErrorCookie()

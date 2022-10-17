@@ -52,6 +52,22 @@ def management_getcunsoltant():
 def management_delcunsoltant():
     data = request.get_json()
     return management.delcunsoltant(data)
+
+@app.route('/management/addinsurer',methods = ['POST', 'GET'])
+def management_addinsurer():
+    data = request.get_json()
+    return management.addinsurer(data)
+
+@app.route('/management/getinsurer',methods = ['POST', 'GET'])
+def management_getinsurer():
+    data = request.get_json()
+    return management.getinsurer(data)
+
+@app.route('/management/delinsurer',methods = ['POST', 'GET'])
+def management_delinsurer():
+    data = request.get_json()
+    return management.delinsurer(data)
+
 #----------------- General -----------------
 @app.route('/general/today',methods = ['POST', 'GET'])
 def general_today():
@@ -74,6 +90,11 @@ def feesreports_getfeesuploads():
 def feesreports_delupload():
     data = request.get_json()
     return feesreports.delupload(data)
+
+@app.route('/feesreports/getinsurer',methods = ['POST', 'GET'])
+def feesreports_getinsurer():
+    data = request.get_json()
+    return feesreports.getinsurer(data)
 #----------------- assing -----------------
 @app.route('/assing/get',methods = ['POST', 'GET'])
 def assing_get():

@@ -11,8 +11,10 @@ def get(data):
     user = json.loads(user)
     username = user['user']['phone']
     if user['replay']:
-        dicFildGet = {'_id':0,'UploadDate':1,'comp':1,'بيمه گذار':1,'بيمه گذار':1,'رشته':1,'مورد بیمه':1,'کل کارمزد محاسبه شده':1,'شماره بيمه نامه':1}
+        dicFildGet = {'_id':0,'UploadDate':1,'comp':1,'بيمه گذار':1,'رشته':1,'مورد بیمه':1,'کل کارمزد محاسبه شده':1,'شماره بيمه نامه':1}
         df = pd.DataFrame(pishkarDb['Fees'].find({'username':username},dicFildGet))
+        if len(df)==0:
+            return json.dumps({'replay':False,'msg':'هیچ فایل کارمزدی موجود نیست'})
         assing = pd.DataFrame(pishkarDb['assing'].find({'username':username}))
         if len(assing)>0:
             df = df.set_index('شماره بيمه نامه').join(assing.set_index('شماره بيمه نامه'),how='left')

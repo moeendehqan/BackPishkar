@@ -15,6 +15,15 @@ def uploadfile(date,cookier,file,comp):
         duplic = pd.DataFrame(pishkarDb['Fees'].find({'UploadDate':date,'comp':comp,'username':username}))
         if len(duplic) == 0:
             df = pd.read_excel(file)
+            print(df.columns)
+            columns = (pishkarDb['insurer'].find_one({'username':username, 'نام':comp},{'_id':0, 'نام':0,'username':0}))
+            for i in columns:
+                print(columns[i] in df.columns)
+                print(columns[i])
+                if columns[i] in df.columns:
+                    df.rename(columns={columns[i]:i})
+                else:
+                    return json.dumps({'replay':False, 'msg':f'فایل فاقد ستون {columns[i]} است'})
             df['UploadDate'] = date
             df['comp'] = comp
             df['username'] = username
@@ -46,9 +55,23 @@ def delupload(data):
     user = cookie(data)
     user = json.loads(user)
     username = user['user']['phone']
-    print(data)
     if user['replay']:
         pishkarDb['Fees'].delete_many({'username':username,'UploadDate':data['date'],'comp':data['comp']})
         return json.dumps({'replay':True})
+    else:
+        return ErrorCookie()
+
+
+def getinsurer(data):
+    user = cookie(data)
+    user = json.loads(user)
+    username = user['user']['phone']
+    if user['replay']:
+        insurer = pd.DataFrame(pishkarDb['insurer'].find({'username':username}))
+        if len(insurer)>0:
+            insurer = list(set(insurer['نام']))
+            return json.dumps({'replay':True, 'insurer':insurer})
+        else:
+            return json.dumps({'replay':False, 'msg':'هیچ بیمه گذاری ثبت نشده'})
     else:
         return ErrorCookie()
