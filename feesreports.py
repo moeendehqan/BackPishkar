@@ -15,11 +15,8 @@ def uploadfile(date,cookier,file,comp):
         duplic = pd.DataFrame(pishkarDb['Fees'].find({'UploadDate':date,'comp':comp,'username':username}))
         if len(duplic) == 0:
             df = pd.read_excel(file)
-            print(df.columns)
             columns = (pishkarDb['insurer'].find_one({'username':username, 'نام':comp},{'_id':0, 'نام':0,'username':0}))
             for i in columns:
-                print(columns[i] in df.columns)
-                print(columns[i])
                 if columns[i] in df.columns:
                     df.rename(columns={columns[i]:i})
                 else:

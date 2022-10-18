@@ -22,7 +22,6 @@ def cunsoltant(data):
     user = cookie(data)
     user = json.loads(user)
     if user['replay']:
-        print(user)
         cheakNC = pishkarDb['cunsoltant'].find_one({'nationalCode':data['cunsoltant']['nationalCode']})
         cheakP = pishkarDb['cunsoltant'].find_one({'phone':data['cunsoltant']['phone']})
         if cheakNC ==None:
@@ -44,6 +43,8 @@ def getcunsoltant(data):
     user = json.loads(user)
     if user['replay']:
         df = pd.DataFrame(pishkarDb['cunsoltant'].find({'username':user['user']['phone']},{'_id':0}))
+        if len(df)==0:
+            return json.dumps({'replay':False, 'msg':'هیچ مشاوری تعریف نشده'})
         df = df.to_dict(orient='records')
         return json.dumps({'replay':True, 'df':df})
     else:
@@ -92,7 +93,6 @@ def delinsurer(data):
     user = json.loads(user)
     username = user['user']['phone']
     if user['replay']:
-        print(data)
         pishkarDb['insurer'].delete_many({'username':username,'نام':data['name']})
         return json.dumps({'replay':True})
     else:

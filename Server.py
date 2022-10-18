@@ -101,6 +101,15 @@ def assing_get():
     data = request.get_json()
     return assing.get(data)
 
+@app.route('/assing/getinsurnac',methods = ['POST', 'GET'])
+def assing_getinsurnac():
+    data = request.get_json()
+    return assing.getinsurnac(data)
+
+@app.route('/assing/set',methods = ['POST', 'GET'])
+def assing_set():
+    data = request.get_json()
+    return assing.set(data)
 
 if __name__ == '__main__':
     #from waitress import serve
