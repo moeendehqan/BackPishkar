@@ -10,6 +10,7 @@ import sms
 import timedate
 import feesreports
 import assing
+import consultant
 
 warnings.filterwarnings("ignore")
 client = pymongo.MongoClient()
@@ -110,6 +111,17 @@ def assing_getinsurnac():
 def assing_set():
     data = request.get_json()
     return assing.set(data)
+#----------------- consultant -----------------
+@app.route('/consultant/getfees',methods = ['POST', 'GET'])
+def consultant_getfees():
+    data = request.get_json()
+    return consultant.getfees(data)
+
+@app.route('/consultant/setfees',methods = ['POST', 'GET'])
+def consultant_setfees():
+    data = request.get_json()
+    return consultant.setfees(data)
+
 
 if __name__ == '__main__':
     #from waitress import serve

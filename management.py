@@ -2,6 +2,8 @@ import json
 import pymongo
 import pandas as pd
 from Sing import cookie, ErrorCookie
+import timedate
+
 client = pymongo.MongoClient()
 pishkarDb = client['pishkar']
 
@@ -9,6 +11,7 @@ pishkarDb = client['pishkar']
 def profile(data):
     user = cookie(data)
     user = json.loads(user)
+    username = user['user']['phone']
     if user['replay']:
         user = user['user']
         useNew = data['userNew']
@@ -21,6 +24,7 @@ def profile(data):
 def cunsoltant(data):
     user = cookie(data)
     user = json.loads(user)
+    username = user['user']['phone']
     if user['replay']:
         cheakNC = pishkarDb['cunsoltant'].find_one({'nationalCode':data['cunsoltant']['nationalCode']})
         cheakP = pishkarDb['cunsoltant'].find_one({'phone':data['cunsoltant']['phone']})
@@ -41,8 +45,11 @@ def cunsoltant(data):
 def getcunsoltant(data):
     user = cookie(data)
     user = json.loads(user)
+    username = user['user']['phone']
     if user['replay']:
-        df = pd.DataFrame(pishkarDb['cunsoltant'].find({'username':user['user']['phone']},{'_id':0}))
+        df = pd.DataFrame(pishkarDb['cunsoltant'].find({'username':username},{'_id':0,'fristName':1,'lastName':1,'nationalCode':1,'gender':1,'phone':1,'salary':1,'employment':1}))
+        df['employment'] = [timedate.timStumpTojalali(x) for x in df['employment']]
+        print(df)
         if len(df)==0:
             return json.dumps({'replay':False, 'msg':'هیچ مشاوری تعریف نشده'})
         df = df.to_dict(orient='records')
@@ -53,9 +60,15 @@ def getcunsoltant(data):
 def delcunsoltant(data):
     user = cookie(data)
     user = json.loads(user)
+    username = user['user']['phone']
     if user['replay']:
-        pishkarDb['cunsoltant'].delete_many({'nationalCode':data['nationalCode']})
-        return json.dumps({'replay':True})
+        allowDel = pishkarDb['assing'].find_one({'username':username,'nationalCode':data['nationalCode']}) ==None
+        if allowDel:
+            pishkarDb['cunsoltant'].delete_many({'nationalCode':data['nationalCode']})
+            return json.dumps({'replay':True})
+        else:
+            return json.dumps({'replay':False,'msg':'حذف انجام نشد، این مشاور  به بیمه نامه ای تخصیص یافته'})
+
     else:
         return ErrorCookie()
 
