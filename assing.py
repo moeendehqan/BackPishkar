@@ -31,9 +31,11 @@ def get(data):
             df = df.set_index('شماره بيمه نامه').join(assing.set_index('شماره بيمه نامه'),how='left').reset_index()
             df['consultant' ] = [NCtName(cl_consultant,x) for x in df['consultant']]
         else:
-            df['consultant'] = ''
+            df['consultant'] = 'بدون مشاور'
         df['بيمه گذار'] = [x.split(' کد ')[0] for x in df['بيمه گذار']]
-        if data['showAll']:
+        print(data['showAll'])
+        print(df)
+        if data['showAll']==False:
             df = df[df['consultant']=='بدون مشاور']
         df = df.fillna('')
         df = df.to_dict(orient='records')

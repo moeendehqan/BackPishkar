@@ -11,6 +11,7 @@ import timedate
 import feesreports
 import assing
 import consultant
+import Pay
 
 warnings.filterwarnings("ignore")
 client = pymongo.MongoClient()
@@ -69,6 +70,36 @@ def management_delinsurer():
     data = request.get_json()
     return management.delinsurer(data)
 
+@app.route('/management/salary',methods = ['POST', 'GET'])
+def management_salary():
+    data = request.get_json()
+    return management.salary(data)
+
+
+@app.route('/management/getsalary',methods = ['POST', 'GET'])
+def management_getsalary():
+    data = request.get_json()
+    return management.getsalary(data)
+
+@app.route('/management/delsalary',methods = ['POST', 'GET'])
+def management_delsalary():
+    data = request.get_json()
+    return management.delsalary(data)
+
+@app.route('/management/settax',methods = ['POST', 'GET'])
+def management_settax():
+    data = request.get_json()
+    return management.settax(data)
+
+@app.route('/management/gettax',methods = ['POST', 'GET'])
+def management_gettax():
+    data = request.get_json()
+    return management.gettax(data)
+
+@app.route('/management/deltax',methods = ['POST', 'GET'])
+def management_deltax():
+    data = request.get_json()
+    return management.deltax(data)
 #----------------- General -----------------
 @app.route('/general/today',methods = ['POST', 'GET'])
 def general_today():
@@ -121,6 +152,21 @@ def consultant_getfees():
 def consultant_setfees():
     data = request.get_json()
     return consultant.setfees(data)
+
+@app.route('/consultant/getatc',methods = ['POST', 'GET'])
+def consultant_getatc():
+    data = request.get_json()
+    return consultant.getatc(data)
+
+@app.route('/consultant/setatc',methods = ['POST', 'GET'])
+def consultant_setatc():
+    data = request.get_json()
+    return consultant.setatc(data)
+#----------------- Pay -----------------
+@app.route('/pay/get',methods = ['POST', 'GET'])
+def pay_get():
+    data = request.get_json()
+    return Pay.get(data)
 
 
 if __name__ == '__main__':

@@ -47,11 +47,10 @@ def getcunsoltant(data):
     user = json.loads(user)
     username = user['user']['phone']
     if user['replay']:
-        df = pd.DataFrame(pishkarDb['cunsoltant'].find({'username':username},{'_id':0,'fristName':1,'lastName':1,'nationalCode':1,'gender':1,'phone':1,'salary':1,'employment':1}))
-        df['employment'] = [timedate.timStumpTojalali(x) for x in df['employment']]
-        print(df)
+        df = pd.DataFrame(pishkarDb['cunsoltant'].find({'username':username},{'_id':0,'fristName':1,'lastName':1,'nationalCode':1,'gender':1,'phone':1,'salary':1,'employment':1,'childern':1}))
         if len(df)==0:
             return json.dumps({'replay':False, 'msg':'هیچ مشاوری تعریف نشده'})
+        df['employment'] = [timedate.timStumpTojalali(x) for x in df['employment']]
         df = df.to_dict(orient='records')
         return json.dumps({'replay':True, 'df':df})
     else:
@@ -89,8 +88,45 @@ def addinsurer(data):
     else:
         return ErrorCookie()
 
+    
+def settax(data):
+    user = cookie(data)
+    user = json.loads(user)
+    username = user['user']['phone']
+    if user['replay']:
+        lavel = data['level']
+        lavel['username'] = username
+        if pishkarDb['taxe'].find_one({'username':username,'year':lavel['year']}) == None:
+            pishkarDb['taxe'].insert_one(lavel)
+        else:
+            pishkarDb['taxe'].update_one({'username':username,'year':lavel['year']},{'$set':lavel})
+        return json.dumps({'replay':True})
+    else:
+        return ErrorCookie()
 
 
+def gettax(data):
+    user = cookie(data)
+    user = json.loads(user)
+    username = user['user']['phone']
+    if user['replay']:
+        df = pd.DataFrame(pishkarDb['taxe'].find({'username':username},{'_id':0,'username':0}))
+        df = df.replace('',0)
+        df = df.to_dict(orient='records')
+        return json.dumps({'replay':True,'df':df})
+    else:
+        return ErrorCookie() 
+    
+def deltax(data):
+    user = cookie(data)
+    user = json.loads(user)
+    username = user['user']['phone']
+    if user['replay']:
+        pishkarDb['taxe'].find_one_and_delete({'username':username,'year':data['year']})
+        return json.dumps({'replay':True})
+    else:
+        return ErrorCookie() 
+    
 def getinsurer(data):
     user = cookie(data)
     user = json.loads(user)
@@ -108,5 +144,42 @@ def delinsurer(data):
     if user['replay']:
         pishkarDb['insurer'].delete_many({'username':username,'نام':data['name']})
         return json.dumps({'replay':True})
+    else:
+        return ErrorCookie()
+
+
+def salary(data):
+    user = cookie(data)
+    user = json.loads(user)
+    username = user['user']['phone']
+    if user['replay']:
+        salary = data['salary']
+        salary['username'] = username
+        if pishkarDb['salary'].find_one({'username':username, 'year':salary['year']})==None:
+            pishkarDb['salary'].insert_one(salary)
+            return json.dumps({'replay':True , 'msg':'ثبت شده'})
+        else:
+            pishkarDb['salary'].update_one({'username':username, 'year':salary['year']},{'$set':salary})
+            return json.dumps({'replay':True, 'msg':'بروز رسانی شد'})
+    else:
+        return ErrorCookie()
+
+def getsalary(data):
+    user = cookie(data)
+    user = json.loads(user)
+    username = user['user']['phone']
+    if user['replay']:
+        df = [x for x in pishkarDb['salary'].find({'username':username},{'_id':0})]
+        return json.dumps({'df':df})
+    else:
+        return ErrorCookie()
+
+def delsalary(data):
+    user = cookie(data)
+    user = json.loads(user)
+    username = user['user']['phone']
+    if user['replay']:
+        pishkarDb['salary'].delete_one({'username':username, 'year':data['year']})
+        return json.dumps({'replat':True})
     else:
         return ErrorCookie()
