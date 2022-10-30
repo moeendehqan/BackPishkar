@@ -30,6 +30,7 @@ def cunsoltant(data):
         cheakP = pishkarDb['cunsoltant'].find_one({'phone':data['cunsoltant']['phone']})
         if cheakNC ==None:
             if cheakP == None:
+                print(data)
                 data['cunsoltant']['username'] = user['user']['phone']
                 pishkarDb['cunsoltant'].insert_one(data['cunsoltant'])
                 return json.dumps({'replay':True})
@@ -47,10 +48,12 @@ def getcunsoltant(data):
     user = json.loads(user)
     username = user['user']['phone']
     if user['replay']:
-        df = pd.DataFrame(pishkarDb['cunsoltant'].find({'username':username},{'_id':0,'fristName':1,'lastName':1,'nationalCode':1,'gender':1,'phone':1,'salary':1,'employment':1,'childern':1}))
+        df = pd.DataFrame(pishkarDb['cunsoltant'].find({'username':username},{'_id':0,'fristName':1,'lastName':1,'nationalCode':1,'gender':1,'phone':1,'salary':1,'employment':1,'childern':1,'freetaxe':1,'salaryGroup':1}))
         if len(df)==0:
             return json.dumps({'replay':False, 'msg':'هیچ مشاوری تعریف نشده'})
+        print(df)
         df['employment'] = [timedate.timStumpTojalali(x) for x in df['employment']]
+        df = df.fillna('')
         df = df.to_dict(orient='records')
         return json.dumps({'replay':True, 'df':df})
     else:
@@ -79,7 +82,7 @@ def addinsurer(data):
     if user['replay']:
         columns = data['insurer']
         columns['username'] = username
-        find = pishkarDb['insurer'].find_one({'نام':columns['نام']})==None
+        find = pishkarDb['insurer'].find_one({'نام':columns['نام'],'username':username})==None
         if find:
             pishkarDb['insurer'].insert_one(columns)
             return json.dumps({'replay':True,'msg':'ثبت شده'})
@@ -155,11 +158,11 @@ def salary(data):
     if user['replay']:
         salary = data['salary']
         salary['username'] = username
-        if pishkarDb['salary'].find_one({'username':username, 'year':salary['year']})==None:
+        if pishkarDb['salary'].find_one({'username':username, 'year':salary['year'],'gruop':salary['gruop']})==None:
             pishkarDb['salary'].insert_one(salary)
             return json.dumps({'replay':True , 'msg':'ثبت شده'})
         else:
-            pishkarDb['salary'].update_one({'username':username, 'year':salary['year']},{'$set':salary})
+            pishkarDb['salary'].update_one({'username':username, 'year':salary['year'],'gruop':salary['gruop']},{'$set':salary})
             return json.dumps({'replay':True, 'msg':'بروز رسانی شد'})
     else:
         return ErrorCookie()
@@ -181,5 +184,47 @@ def delsalary(data):
     if user['replay']:
         pishkarDb['salary'].delete_one({'username':username, 'year':data['year']})
         return json.dumps({'replat':True})
+    else:
+        return ErrorCookie()
+
+def setsub(data):
+    user = cookie(data)
+    user = json.loads(user)
+    username = user['user']['phone']
+    print(data)
+    if user['replay']:
+        if pishkarDb['sub'].find_one({'username':username,'subPhone':data['sub']['phone']}) ==None:
+            pishkarDb['sub'].insert_one({'username':username,'subPhone':data['sub']['phone'],'allowManagement':data['sub']['allowManagement'],'allowDesk':data['sub']['allowDesk']})
+            return json.dumps({'replay':True})
+        else:
+            return json.dumps({'replay':False})
+    else:
+        return ErrorCookie()
+
+def getsub(data):
+    user = cookie(data)
+    user = json.loads(user)
+    username = user['user']['phone']
+    if user['replay']:
+        df = pd.DataFrame(pishkarDb['sub'].find({'username':username},{'_id':0}))
+        if len(df)==0:
+            return json.dumps({'replay':False})
+        df = df.to_dict(orient='records')
+        print(df)
+        return json.dumps({'replay':True,'df':df})
+    else:
+        return ErrorCookie()
+
+
+def getgroupsalary(data):
+    user = cookie(data)
+    user = json.loads(user)
+    username = user['user']['phone']
+    if user['replay']:
+        df = list(pishkarDb['salary'].find({'username':username},{'_id':0,'gruop':1}))
+        if len(df)==0:
+            return json.dumps({'replay':False,'msg':'هیچ گروه حقوق و دسمتزدی یافت نشد'})
+        df = [x['gruop'] for x in df]
+        return json.dumps({'replay':True, 'df':df})
     else:
         return ErrorCookie()

@@ -10,9 +10,12 @@ pishkarDb = client['pishkar']
 def NCtName(cl,nc):
     if str(nc)!='nan':
         df = cl[cl['nationalCode']==nc]
-        df['full'] = df['gender'] +' '+ df['fristName'] +' '+ df['lastName']
-        df = df['full'][df.index.max()]
-        return df
+        if len(df)>0:
+            df['full'] = df['gender'] +' '+ df['fristName'] +' '+ df['lastName']
+            df = df['full'][df.index.max()]
+            return df
+        else:
+            return 'بدون مشاور'
     else:
         return 'بدون مشاور'
 
@@ -21,20 +24,18 @@ def get(data):
     user = json.loads(user)
     username = user['user']['phone']
     if user['replay']:
-        dicFildGet = {'_id':0,'UploadDate':1,'comp':1,'بيمه گذار':1,'رشته':1,'مورد بیمه':1,'کل کارمزد محاسبه شده':1,'شماره بيمه نامه':1}
+        dicFildGet = {'_id':0,'comp':1,'بيمه گذار':1,'رشته':1,'مورد بیمه':1,'تاریخ صدور بیمه نامه':1,'شماره بيمه نامه':1}
         df = pd.DataFrame(pishkarDb['Fees'].find({'username':username},dicFildGet))
+        df = df.drop_duplicates(subset="شماره بيمه نامه")
         if len(df)==0:
             return json.dumps({'replay':False,'msg':'هیچ فایل کارمزدی موجود نیست'})
         assing = pd.DataFrame(pishkarDb['assing'].find({'username':username},{'username':0,'_id':0}))
         if len(assing)>0:
-            cl_consultant = pd.DataFrame(pishkarDb['cunsoltant'].find({'username':username}))
             df = df.set_index('شماره بيمه نامه').join(assing.set_index('شماره بيمه نامه'),how='left').reset_index()
+            cl_consultant = pd.DataFrame(pishkarDb['cunsoltant'].find({'username':username}))
             df['consultant' ] = [NCtName(cl_consultant,x) for x in df['consultant']]
         else:
             df['consultant'] = 'بدون مشاور'
-        df['بيمه گذار'] = [x.split(' کد ')[0] for x in df['بيمه گذار']]
-        print(data['showAll'])
-        print(df)
         if data['showAll']==False:
             df = df[df['consultant']=='بدون مشاور']
         df = df.fillna('')
@@ -50,7 +51,6 @@ def getinsurnac(data):
     if user['replay']:
         df = (pishkarDb['Fees'].find_one({'username':username, 'شماره بيمه نامه':data['code']},{'_id':0, 'رشته':1, 'مورد بیمه':1, 'بيمه گذار':1, 'تاریخ صدور بیمه نامه':1, 'comp':1, 'شماره بيمه نامه':1}))
         assing = pishkarDb['assing'].find_one({'username':username,'شماره بيمه نامه':data['code']},{'_id':0})
-        print(assing)
         if assing==None:
             df['Consultant'] ={'name':'ندارد', 'code':0}
         else:
@@ -67,10 +67,10 @@ def set(data):
     user = json.loads(user)
     username = user['user']['phone']
     if user['replay']:
-        if str(data['consultant'])!='0':
-            pishkarDb['assing'].insert_one({'username':username, 'شماره بيمه نامه':data['code'], 'consultant':data['consultant']})
+        if pishkarDb['assing'].find_one({'username':username, 'شماره بيمه نامه':data['code']})!=None:
+             pishkarDb['assing'].delete_many({'username':username, 'شماره بيمه نامه':data['code']})     
         else:
-            pishkarDb['assing'].delete_one({'username':username, 'شماره بيمه نامه':data['code']})
+            pishkarDb['assing'].insert_one({'username':username, 'شماره بيمه نامه':data['code'], 'consultant':data['consultant']})
         return json.dumps({'o':'o'})
     else:
         return ErrorCookie()

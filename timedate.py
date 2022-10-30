@@ -28,6 +28,6 @@ def diffTime2(deltaTime):
     return res
 
 def timStumpTojalali(timeStump):
-    print(timeStump)
-    kk = str(JalaliDate.fromtimestamp((timeStump/1000))).replace('-','/')
+    kk = str(JalaliDate.fromtimestamp((int(timeStump)/1000)))
+    kk = kk.replace('-','/')
     return kk

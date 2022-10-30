@@ -34,6 +34,11 @@ def cookie():
     data = request.get_json()
     return Sing.cookie(data)
 
+@app.route('/sing/captcha',methods = ['POST', 'GET'])
+def captcha():
+    data = request.get_json()
+    return Sing.captcha(data)
+
 #----------------- Management -----------------
 @app.route('/management/profile',methods = ['POST', 'GET'])
 def management_profile():
@@ -100,6 +105,21 @@ def management_gettax():
 def management_deltax():
     data = request.get_json()
     return management.deltax(data)
+
+@app.route('/management/setsub',methods = ['POST', 'GET'])
+def management_setsub():
+    data = request.get_json()
+    return management.setsub(data)
+
+@app.route('/management/getsub',methods = ['POST', 'GET'])
+def management_getsub():
+    data = request.get_json()
+    return management.getsub(data)
+
+@app.route('/management/getgroupsalary',methods = ['POST', 'GET'])
+def management_getgroupsalary():
+    data = request.get_json()
+    return management.getgroupsalary(data)
 #----------------- General -----------------
 @app.route('/general/today',methods = ['POST', 'GET'])
 def general_today():
@@ -127,6 +147,15 @@ def feesreports_delupload():
 def feesreports_getinsurer():
     data = request.get_json()
     return feesreports.getinsurer(data)
+
+
+@app.route('/feesreports/getallfeesFile',methods = ['POST', 'GET'])
+def feesreports_getallfeesFile():
+    cookie = request.form['cookie']
+    file =  request.files['feesFile']
+    comp = request.form['comp']
+    return feesreports.getallfeesFile(cookie,file,comp)
+
 #----------------- assing -----------------
 @app.route('/assing/get',methods = ['POST', 'GET'])
 def assing_get():
@@ -168,6 +197,11 @@ def pay_get():
     data = request.get_json()
     return Pay.get(data)
 
+#----------------- Pay -----------------
+@app.route('/pay/perforator',methods = ['POST', 'GET'])
+def pay_perforator():
+    data = request.get_json()
+    return Pay.perforator(data)
 
 if __name__ == '__main__':
     #from waitress import serve

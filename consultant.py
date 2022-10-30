@@ -21,7 +21,7 @@ def getfees(data):
         for f in feild:
             if f not in consultant.columns:
                 consultant[f] = 0
-        consultant = consultant.drop(columns=['fristName','lastName','nationalCode','gender','phone','code','childern'])
+        consultant = consultant.drop(columns=['fristName','lastName','nationalCode','gender','phone','code','childern','freetaxe','salaryGroup'])
         consultant = consultant.to_dict(orient='records')
         return json.dumps({'replay':True, 'df':consultant})
     else:
@@ -33,9 +33,11 @@ def setfees(data):
     user = json.loads(user)
     username = user['user']['phone']
     if user['replay']:
-        print(data['fees'])
+        dic = data['fees']
+        del dic['salary']
+        del dic['employment']
         pishkarDb['cunsoltant'].update_one({'username':username,'nationalCode':data['nc']},{'$set':data['fees']})
-        return json.dumps({'o':"o"})
+        return json.dumps({'replay':True})
     else:
         return ErrorCookie()
 
@@ -50,8 +52,12 @@ def getatc(data):
         actDf = pd.DataFrame(pishkarDb['act'].find({'username':username,'period':data['today']['Show']},{'_id':0}))
         if len(actDf)==0:
             df['act'] = 0
+            df['period'] = data['today']['Show']
         else:
             df = df.set_index('nationalCode').join(actDf.set_index('nationalCode')).reset_index()
+            df['period'] = data['today']['Show']
+        df = df[['nationalCode','fristName','lastName','gender','act','period']].fillna(0)
+        print(df)
         df = df.to_dict(orient='records')
         return json.dumps({'replay':True,'df':df})
 
@@ -64,15 +70,11 @@ def setatc(data):
     user = json.loads(user)
     username = user['user']['phone']
     if user['replay']:
-        act = str(data['act'])
-        if len(act)==0:act = 0
-        else: act = int(act)
-        if act>31:
-            return json.dumps({'replay':False, 'msg':'حداکثر کارکرد 31 روز میباشد'})
-        if pishkarDb['act'].find_one({'username':username, 'nationalCode':data['nc'], 'period':data['period']['Show']})==None:
-            pishkarDb['act'].insert_one({'username':username, 'nationalCode':data['nc'],'act':data['act'],'period':data['period']['Show']})
-        else:
-            pishkarDb['act'].update_one({'username':username, 'nationalCode':data['nc'], 'period':data['period']['Show']},{'$set':{'act':data['act']}})
+        act = (data['listatc'])
+        for i in act:
+            print(i)
+            pishkarDb['act'].delete_many({'username':username,'nationalCode':i['nationalCode'],'period':i['period']})
+            pishkarDb['act'].insert_one({'username':username,'nationalCode':i['nationalCode'],'period':i['period'],'act':i['act']})
         return json.dumps({'replay':True})
     else:
         return ErrorCookie()

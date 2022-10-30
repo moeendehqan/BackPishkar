@@ -2,6 +2,9 @@ import json
 import pymongo
 import crypto
 import timedate
+from flask import send_file
+from captcha import captchaGenerate
+import base64
 
 client = pymongo.MongoClient()
 pishkarDb = client['pishkar']
@@ -9,9 +12,13 @@ pishkarDb = client['pishkar']
 def login(data):
     phone = data['phone']
     if pishkarDb['username'].find_one({'phone':phone})==None:
-        regDate = str(timedate.toDay())
-        limDate = str(timedate.deltaTime(30))
-        pishkarDb['username'].insert_one({'phone':phone, 'name':'', 'email':'', 'address':'', 'phonework':'', 'company':'','registerdate':regDate, 'limitDate':limDate, 'management':True})
+        if pishkarDb['sub'].find_one({'subPhone':phone})==None:
+            regDate = str(timedate.toDay())
+            limDate = str(timedate.deltaTime(30))
+            pishkarDb['username'].insert_one({'phone':phone, 'name':'', 'email':'', 'address':'', 'phonework':'', 'company':'','registerdate':regDate, 'limitDate':limDate, 'management':True})
+        else:
+            sub = pishkarDb['sub'].find_one({'subPhone':phone})
+            return json.dumps({'replay':True,'Cookie':crypto.encrypt(sub['username']).decode()})
     return json.dumps({'replay':True,'Cookie':crypto.encrypt(phone).decode()})
 
 def cookie(data):
@@ -29,3 +36,8 @@ def cookie(data):
 def ErrorCookie():
     return json.dumps({'replay':False,'msg':'خطا در شناسایی کاربر لطفا مجدد تلاش کنید'})
     
+
+
+def captcha(data):
+    cg = captchaGenerate()
+    return json.dumps({'cptcha':cg})

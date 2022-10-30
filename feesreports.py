@@ -40,7 +40,11 @@ def getfeesuploads(data):
     if user['replay']:
         df = pd.DataFrame(pishkarDb['Fees'].find({'username':username}))
         if len(df)>0:
-            df = df[['comp','UploadDate']].drop_duplicates()
+            df = df[['comp','UploadDate','کد رایانه صدور','شماره بيمه نامه','كارمزد قابل پرداخت']]
+            df = df.drop_duplicates()
+            df = df.groupby(by=['comp','UploadDate']).sum().reset_index()
+            df = df[['comp','UploadDate','كارمزد قابل پرداخت']]
+            print(df)
             df = df.to_dict(orient='records')
             return json.dumps({'df':df})
         else:
@@ -70,5 +74,23 @@ def getinsurer(data):
             return json.dumps({'replay':True, 'insurer':insurer})
         else:
             return json.dumps({'replay':False, 'msg':'هیچ بیمه گذاری ثبت نشده'})
+    else:
+        return ErrorCookie()
+    
+def getallfeesFile(cookier,file,comp):
+    user = cookie(cookier)
+    user = json.loads(user)
+    username = user['user']['phone']
+    if user['replay']:
+        df = pd.read_excel(file)
+        columns = (pishkarDb['insurer'].find_one({'username':username, 'نام':comp},{'_id':0, 'نام':0,'username':0}))
+        for i in columns:
+            if columns[i] in df.columns:
+                df.rename(columns={columns[i]:i})
+            else:
+                return json.dumps({'replay':False, 'msg':f'فایل فاقد ستون {columns[i]} است'})
+        df = df.drop_duplicates(subset=['کد رایانه صدور','كارمزد قابل پرداخت'])
+        df = int(df['كارمزد قابل پرداخت'].sum())
+        return json.dumps({'Allfees':df})
     else:
         return ErrorCookie()
