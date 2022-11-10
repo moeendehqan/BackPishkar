@@ -13,7 +13,7 @@ import assing
 import consultant
 import Pay
 import branche
-
+import issuing
 import winreg as reg
 
 
@@ -266,7 +266,18 @@ def branche_getvalue():
 def branche_addvalue():
     data = request.get_json()
     return branche.addvalue(data)
+#----------------- assing -----------------
+@app.route('/issuing/addfile',methods = ['POST', 'GET'])
+def issuing_addfile():
+    cookie = request.form['cookie']
+    file =  request.files['feesFile']
+    comp = request.form['comp']
+    return issuing.addfile(cookie,file,comp)
 
+@app.route('/issuing/getdf',methods = ['POST', 'GET'])
+def issuing_getdf():
+    data = request.get_json()
+    return issuing.getdf(data)
 
 if __name__ == '__main__':
     #from waitress import serve
