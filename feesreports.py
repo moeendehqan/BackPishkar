@@ -44,7 +44,6 @@ def getfeesuploads(data):
             df = df.drop_duplicates()
             df = df.groupby(by=['comp','UploadDate']).sum().reset_index()
             df = df[['comp','UploadDate','كارمزد قابل پرداخت']]
-            print(df)
             df = df.to_dict(orient='records')
             return json.dumps({'df':df})
         else:

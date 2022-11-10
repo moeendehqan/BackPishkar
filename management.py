@@ -1,4 +1,5 @@
 import json
+from unicodedata import name
 import pymongo
 import pandas as pd
 from Sing import cookie, ErrorCookie
@@ -7,6 +8,13 @@ import timedate
 client = pymongo.MongoClient()
 pishkarDb = client['pishkar']
 
+def NcToName(nc,username):
+    name = pishkarDb['cunsoltant'].find_one({'username':username,'nationalCode':nc})
+    if name != None:
+        name = name['fristName'] + ' ' +name['lastName']
+        return name
+    else:
+        return ''
 
 def profile(data):
     user = cookie(data)
@@ -30,16 +38,17 @@ def cunsoltant(data):
         cheakP = pishkarDb['cunsoltant'].find_one({'phone':data['cunsoltant']['phone']})
         if cheakNC ==None:
             if cheakP == None:
-                print(data)
                 data['cunsoltant']['username'] = user['user']['phone']
                 pishkarDb['cunsoltant'].insert_one(data['cunsoltant'])
                 return json.dumps({'replay':True})
             else:
-                phone = data['cunsoltant']['phone']
-                return json.dumps({'replay':False,'msg':f'شماره همراه {phone} قبلا ثبت شده است'})
+                data['cunsoltant']['username'] = user['user']['phone']
+                pishkarDb['cunsoltant'].update_many({'username':username,'phone':data['cunsoltant']['phone']},{'$set':data['cunsoltant']})
+                return json.dumps({'replay':True})
         else:
-            nationalCode = data['cunsoltant']['nationalCode']
-            return json.dumps({'replay':False,'msg':f'کد ملی {nationalCode} قبلا ثبت شده است'})
+            data['cunsoltant']['username'] = user['user']['phone']
+            pishkarDb['cunsoltant'].update_many({'username':username,'nationalCode':data['cunsoltant']['nationalCode']},{'$set':data['cunsoltant']})
+            return json.dumps({'replay':True})
     else:
         return ErrorCookie()
 
@@ -48,11 +57,9 @@ def getcunsoltant(data):
     user = json.loads(user)
     username = user['user']['phone']
     if user['replay']:
-        df = pd.DataFrame(pishkarDb['cunsoltant'].find({'username':username},{'_id':0,'fristName':1,'lastName':1,'nationalCode':1,'gender':1,'phone':1,'salary':1,'employment':1,'childern':1,'freetaxe':1,'salaryGroup':1}))
+        df = pd.DataFrame(pishkarDb['cunsoltant'].find({'username':username},{'_id':0,'fristName':1,'lastName':1,'nationalCode':1,'gender':1,'phone':1,'salary':1,'childern':1,'freetaxe':1,'salaryGroup':1,'insureWorker':1,'insureEmployer':1}))
         if len(df)==0:
             return json.dumps({'replay':False, 'msg':'هیچ مشاوری تعریف نشده'})
-        print(df)
-        df['employment'] = [timedate.timStumpTojalali(x) for x in df['employment']]
         df = df.fillna('')
         df = df.to_dict(orient='records')
         return json.dumps({'replay':True, 'df':df})
@@ -135,7 +142,8 @@ def getinsurer(data):
     user = json.loads(user)
     username = user['user']['phone']
     if user['replay']:
-        insurerList = [x['نام'] for x in (pishkarDb['insurer'].find({'username':username},{'_id':0,'نام':1}))]
+        insurerList = pd.DataFrame((pishkarDb['insurer'].find({'username':username},{'_id':0,'نام':1})))
+        insurerList = insurerList.to_dict(orient='records')
         return json.dumps({'replay':True, 'list':insurerList})
     else:
         return ErrorCookie()
@@ -191,7 +199,7 @@ def setsub(data):
     user = cookie(data)
     user = json.loads(user)
     username = user['user']['phone']
-    print(data)
+
     if user['replay']:
         if pishkarDb['sub'].find_one({'username':username,'subPhone':data['sub']['phone']}) ==None:
             pishkarDb['sub'].insert_one({'username':username,'subPhone':data['sub']['phone'],'allowManagement':data['sub']['allowManagement'],'allowDesk':data['sub']['allowDesk']})
@@ -210,7 +218,7 @@ def getsub(data):
         if len(df)==0:
             return json.dumps({'replay':False})
         df = df.to_dict(orient='records')
-        print(df)
+
         return json.dumps({'replay':True,'df':df})
     else:
         return ErrorCookie()
@@ -226,5 +234,109 @@ def getgroupsalary(data):
             return json.dumps({'replay':False,'msg':'هیچ گروه حقوق و دسمتزدی یافت نشد'})
         df = [x['gruop'] for x in df]
         return json.dumps({'replay':True, 'df':df})
+    else:
+        return ErrorCookie()
+
+def addbranche(data):
+    user = cookie(data)
+    user = json.loads(user)
+    username = user['user']['phone']
+    if user['replay']:
+        subList = [x['subconsultant'] for x in data['SubConsultantList']]
+        subList = list(set(subList))
+        if data['managementBranche'] in subList:
+            return json.dumps({'replay':False, 'msg':'مدیر شعبه در مشاوران شعبه تکرار شده است'})
+        branche = pd.DataFrame(pishkarDb['branches'].find({}))
+        if len(branche)>0:
+            brancheSubList = []
+            for i in list(branche[branche['BranchesName']!=data['BranchesName']]['SubConsultantList']):
+                for j in i:
+                    brancheSubList.append(j)
+            for i in subList:
+                if i in brancheSubList:
+                    name = NcToName(i,username)
+                    return json.dumps({'replay':False,'msg':f'{name} در شعبه دیگری ثبت شده'})
+        if pishkarDb['branches'].find_one({'username':username,'BranchesName':data['BranchesName']})!=None:
+            pishkarDb['branches'].update_one({'username':username,'BranchesName':data['BranchesName']},{'$set':{'managementBranche':data['managementBranche'],'SubConsultantList':subList}})
+            return json.dumps({'replay':True})
+        if pishkarDb['branches'].find_one({'username':username,'management':data['managementBranche']})!=None:
+            return json.dumps({'replay':False, 'msg':'مدیر شعبه تکراری است'})
+        pishkarDb['branches'].insert_one({'username':username,'BranchesName':data['BranchesName'],'managementBranche':data['managementBranche'],'SubConsultantList':subList})
+        return json.dumps({'replay':True})
+    else:
+        return ErrorCookie()
+
+
+def getbranche(data):
+    user = cookie(data)
+    user = json.loads(user)
+    username = user['user']['phone']
+    if user['replay']:
+        df = pd.DataFrame(pishkarDb['branches'].find({'username':username},{'_id':0}))
+        if len(df)>0:
+            df['managementBranche'] = [NcToName(x,username) for x in df['managementBranche']]
+            for i in df.index:
+                if len(df['SubConsultantList'][i])==0:
+                    df['SubConsultantList'][i] = ''
+                else:
+                    listsubi = ''
+                    for j in df['SubConsultantList'][i]:
+                        listsubi = listsubi + ' , ' +(NcToName(j,username))
+                    df['SubConsultantList'][i] = listsubi[3:]
+
+            df = df.to_dict(orient='records')
+            return json.dumps({'replay':True,'df':df})
+        else:
+            return json.dumps({'replay':True,'msg':'هیچ شعبه ای ثبت نشده'})
+    else:
+        return ErrorCookie()
+
+
+def delbranche(data):
+    user = cookie(data)
+    user = json.loads(user)
+    username = user['user']['phone']
+    if user['replay']:
+        dl = pishkarDb['branches'].find_one_and_delete({'username':username,'BranchesName':data['name']})
+        if dl != None:
+            return json.dumps({'replay':True})
+        else:
+            return json.dumps({'replay':False,'msg':'شعبه یافت نشد'})
+    else:
+        return ErrorCookie()
+
+def addminsalary(data):
+    user = cookie(data)
+    user = json.loads(user)
+    username = user['user']['phone']
+    if user['replay']:
+        df = pishkarDb['minimumSalary'].find_one({'username':username,'year':data['minimum']['year']})
+        if df == None:
+            pishkarDb['minimumSalary'].insert_one({'username':username,'year':data['minimum']['year'],'value':data['minimum']['value']})
+        else:
+            pishkarDb['minimumSalary'].update_one({'username':username,'year':data['minimum']['year']},{'$set':{'value':data['minimum']['value']}})
+        return json.dumps({'replay':True})
+    else:
+        return ErrorCookie()
+
+def getminsalary(data):
+    user = cookie(data)
+    user = json.loads(user)
+    username = user['user']['phone']
+    if user['replay']:
+        df = [x for x in pishkarDb['minimumSalary'].find({'username':username},{'_id':0,'username':0})]
+        if len(df)==0:
+            return json.dumps({'replay':False})
+        return json.dumps({'replay':True,'df':df})
+    else:
+        return ErrorCookie()
+
+def delminsalary(data):
+    user = cookie(data)
+    user = json.loads(user)
+    username = user['user']['phone']
+    if user['replay']:
+        pishkarDb['minimumSalary'].delete_one({'username':username,'year':data['year']})
+        return json.dumps({'replay':True})
     else:
         return ErrorCookie()

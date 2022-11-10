@@ -40,4 +40,4 @@ def ErrorCookie():
 
 def captcha(data):
     cg = captchaGenerate()
-    return json.dumps({'cptcha':cg})
+    return json.dumps({'cptcha':cg[0],'img':cg[1]})

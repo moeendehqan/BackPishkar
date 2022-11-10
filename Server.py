@@ -12,7 +12,18 @@ import feesreports
 import assing
 import consultant
 import Pay
+import branche
 
+import winreg as reg
+
+
+def addToReg(): # For add Script Address To Registry
+    key = reg.OpenKey(reg.HKEY_CURRENT_USER , "Software\Microsoft\Windows\CurrentVersion\Run" ,0 , reg.KEY_ALL_ACCESS) # Open The Key
+    reg.SetValueEx(key ,"any_name" , 0 , reg.REG_SZ , __file__) # Appending Script Address
+    reg.CloseKey(key) # Close The Key
+
+
+addToReg()
 warnings.filterwarnings("ignore")
 client = pymongo.MongoClient()
 app = Flask(__name__)
@@ -120,6 +131,39 @@ def management_getsub():
 def management_getgroupsalary():
     data = request.get_json()
     return management.getgroupsalary(data)
+
+
+@app.route('/management/addbranche',methods = ['POST', 'GET'])
+def management_addbranche():
+    data = request.get_json()
+    return management.addbranche(data)
+
+@app.route('/management/getbranche',methods = ['POST', 'GET'])
+def management_getbranche():
+    data = request.get_json()
+    return management.getbranche(data)
+
+@app.route('/management/delbranche',methods = ['POST', 'GET'])
+def management_delbranche():
+    data = request.get_json()
+    return management.delbranche(data)
+
+@app.route('/management/addminsalary',methods = ['POST', 'GET'])
+def management_addminsalary():
+    data = request.get_json()
+    return management.addminsalary(data)
+
+@app.route('/management/getminsalary',methods = ['POST', 'GET'])
+def management_getminsalary():
+    data = request.get_json()
+    return management.getminsalary(data)
+
+
+@app.route('/management/delminsalary',methods = ['POST', 'GET'])
+def management_delminsalary():
+    data = request.get_json()
+    return management.delminsalary(data)
+
 #----------------- General -----------------
 @app.route('/general/today',methods = ['POST', 'GET'])
 def general_today():
@@ -197,11 +241,32 @@ def pay_get():
     data = request.get_json()
     return Pay.get(data)
 
-#----------------- Pay -----------------
 @app.route('/pay/perforator',methods = ['POST', 'GET'])
 def pay_perforator():
     data = request.get_json()
     return Pay.perforator(data)
+
+@app.route('/pay/getbenefit',methods = ['POST', 'GET'])
+def pay_getbenefit():
+    data = request.get_json()
+    return Pay.getbenefit(data)
+
+@app.route('/pay/setbenefit',methods = ['POST', 'GET'])
+def pay_setbenefit():
+    data = request.get_json()
+    return Pay.setbenefit(data)
+
+#----------------- assing -----------------
+@app.route('/branche/getvalue',methods = ['POST', 'GET'])
+def branche_getvalue():
+    data = request.get_json()
+    return branche.getvalue(data)
+
+@app.route('/branche/addvalue',methods = ['POST', 'GET'])
+def branche_addvalue():
+    data = request.get_json()
+    return branche.addvalue(data)
+
 
 if __name__ == '__main__':
     #from waitress import serve

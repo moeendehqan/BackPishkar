@@ -1,5 +1,4 @@
 import json
-from attr import field
 import pymongo
 import pandas as pd
 from Sing import cookie, ErrorCookie
@@ -21,7 +20,7 @@ def getfees(data):
         for f in feild:
             if f not in consultant.columns:
                 consultant[f] = 0
-        consultant = consultant.drop(columns=['fristName','lastName','nationalCode','gender','phone','code','childern','freetaxe','salaryGroup'])
+        consultant = consultant.drop(columns=['fristName','lastName','nationalCode','gender','phone','code','childern','freetaxe','salaryGroup','insureWorker','insureEmployer'])
         consultant = consultant.to_dict(orient='records')
         return json.dumps({'replay':True, 'df':consultant})
     else:
@@ -57,7 +56,6 @@ def getatc(data):
             df = df.set_index('nationalCode').join(actDf.set_index('nationalCode')).reset_index()
             df['period'] = data['today']['Show']
         df = df[['nationalCode','fristName','lastName','gender','act','period']].fillna(0)
-        print(df)
         df = df.to_dict(orient='records')
         return json.dumps({'replay':True,'df':df})
 
@@ -72,7 +70,6 @@ def setatc(data):
     if user['replay']:
         act = (data['listatc'])
         for i in act:
-            print(i)
             pishkarDb['act'].delete_many({'username':username,'nationalCode':i['nationalCode'],'period':i['period']})
             pishkarDb['act'].insert_one({'username':username,'nationalCode':i['nationalCode'],'period':i['period'],'act':i['act']})
         return json.dumps({'replay':True})
