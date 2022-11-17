@@ -33,8 +33,8 @@ def setfees(data):
     username = user['user']['phone']
     if user['replay']:
         dic = data['fees']
+        print(dic)
         del dic['salary']
-        del dic['employment']
         pishkarDb['cunsoltant'].update_one({'username':username,'nationalCode':data['nc']},{'$set':data['fees']})
         return json.dumps({'replay':True})
     else:

@@ -44,6 +44,9 @@ def getfeesuploads(data):
             df = df.drop_duplicates()
             df = df.groupby(by=['comp','UploadDate']).sum().reset_index()
             df = df[['comp','UploadDate','كارمزد قابل پرداخت']]
+            insurec = pd.DataFrame(pishkarDb['insurer'].find({'username':username},{'نام':1,'بیمه گر':1,'_id':0}))
+            insurec = insurec.set_index('نام').to_dict(orient='dict')['بیمه گر']
+            df['insurec'] = [insurec[x] for x in df['comp']]
             df = df.to_dict(orient='records')
             return json.dumps({'df':df})
         else:
@@ -75,6 +78,20 @@ def getinsurer(data):
             return json.dumps({'replay':False, 'msg':'هیچ بیمه گذاری ثبت نشده'})
     else:
         return ErrorCookie()
+
+def getinsurerName(data):
+    user = cookie(data)
+    user = json.loads(user)
+    username = user['user']['phone']
+    if user['replay']:
+        insurer = pd.DataFrame(pishkarDb['insurer'].find({'username':username}))
+        if len(insurer)>0:
+            insurer = list(set(insurer['بیمه گر']))
+            return json.dumps({'replay':True, 'insurer':insurer})
+        else:
+            return json.dumps({'replay':False, 'msg':'هیچ بیمه گذاری ثبت نشده'})
+    else:
+        return ErrorCookie()
     
 def getallfeesFile(cookier,file,comp):
     user = cookie(cookier)
@@ -91,5 +108,54 @@ def getallfeesFile(cookier,file,comp):
         df = df.drop_duplicates(subset=['کد رایانه صدور','كارمزد قابل پرداخت'])
         df = int(df['كارمزد قابل پرداخت'].sum())
         return json.dumps({'Allfees':df})
+    else:
+        return ErrorCookie()
+
+
+def standardfeesget(data):
+    user = cookie(data)
+    user = json.loads(user)
+    username = user['user']['phone']
+    if user['replay']:
+        df = pd.DataFrame(pishkarDb['standardfee'].find({'username':username},{'_id':0}))
+        print(df)
+        df = df.to_dict(orient='records')
+        return json.dumps({'replay':True,'df':df})
+    else:
+        return ErrorCookie()
+
+
+def getField(data):
+    user = cookie(data)
+    user = json.loads(user)
+    username = user['user']['phone']
+    if user['replay']:
+        df = pd.DataFrame(pishkarDb['Fees'].find({'username':username},{'_id':0,'مورد بیمه':1,'رشته':1}))
+        df = df.fillna('')
+        df['Field'] = df['رشته'] + ' '+ '('+ df['مورد بیمه'] + ')'
+        df = [str(x).replace(' ()','') for x in df['Field']]
+        df = list(set(df))
+        return json.dumps({'replay':True,'df':df})
+    else:
+        return ErrorCookie()
+
+def addfield(data):
+    user = cookie(data)
+    user = json.loads(user)
+    username = user['user']['phone']
+    if user['replay']:
+        pishkarDb['standardfee'].delete_many({'username':username,'field':data['field'],'dateshow':data['date']['Show']})
+        pishkarDb['standardfee'].insert_one({'username':username,'field':data['field'],'rate':data['rate'],'dateshow':data['date']['Show'],'date':data['date']['date']})
+        return json.dumps({'replay':True})
+    else:
+        return ErrorCookie()
+
+def delfield(data):
+    user = cookie(data)
+    user = json.loads(user)
+    username = user['user']['phone']
+    if user['replay']:
+        pishkarDb['standardfee'].delete_many({'username':username,'field':data['field'],'dateshow':data['date']})
+        return json.dumps({'replay':True})
     else:
         return ErrorCookie()

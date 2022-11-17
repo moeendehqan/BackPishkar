@@ -17,10 +17,10 @@ import issuing
 import winreg as reg
 
 
-def addToReg(): # For add Script Address To Registry
+def addToReg():
     key = reg.OpenKey(reg.HKEY_CURRENT_USER , "Software\Microsoft\Windows\CurrentVersion\Run" ,0 , reg.KEY_ALL_ACCESS) # Open The Key
-    reg.SetValueEx(key ,"any_name" , 0 , reg.REG_SZ , __file__) # Appending Script Address
-    reg.CloseKey(key) # Close The Key
+    reg.SetValueEx(key ,"any_name" , 0 , reg.REG_SZ , __file__)
+    reg.CloseKey(key)
 
 
 addToReg()
@@ -192,6 +192,10 @@ def feesreports_getinsurer():
     data = request.get_json()
     return feesreports.getinsurer(data)
 
+@app.route('/feesreports/getinsurername',methods = ['POST', 'GET'])
+def feesreports_getinsurername():
+    data = request.get_json()
+    return feesreports.getinsurerName(data)
 
 @app.route('/feesreports/getallfeesFile',methods = ['POST', 'GET'])
 def feesreports_getallfeesFile():
@@ -200,6 +204,26 @@ def feesreports_getallfeesFile():
     comp = request.form['comp']
     return feesreports.getallfeesFile(cookie,file,comp)
 
+@app.route('/standardfees/get',methods = ['POST', 'GET'])
+def standardfees_get():
+    data = request.get_json()
+    return feesreports.standardfeesget(data)
+
+
+@app.route('/standardfees/getField',methods = ['POST', 'GET'])
+def standardfees_getField():
+    data = request.get_json()
+    return feesreports.getField(data)
+
+@app.route('/standardfees/addfield',methods = ['POST', 'GET'])
+def standardfees_addfield():
+    data = request.get_json()
+    return feesreports.addfield(data)
+
+@app.route('/standardfees/delfield',methods = ['POST', 'GET'])
+def standardfees_delfield():
+    data = request.get_json()
+    return feesreports.delfield(data)
 #----------------- assing -----------------
 @app.route('/assing/get',methods = ['POST', 'GET'])
 def assing_get():
@@ -266,7 +290,7 @@ def branche_getvalue():
 def branche_addvalue():
     data = request.get_json()
     return branche.addvalue(data)
-#----------------- assing -----------------
+
 @app.route('/issuing/addfile',methods = ['POST', 'GET'])
 def issuing_addfile():
     cookie = request.form['cookie']

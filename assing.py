@@ -39,6 +39,9 @@ def get(data):
         if data['showAll']==False:
             df = df[df['consultant']=='بدون مشاور']
         df = df.fillna('')
+        insurec = pd.DataFrame(pishkarDb['insurer'].find({'username':username},{'نام':1,'بیمه گر':1,'_id':0}))
+        insurec = insurec.set_index('نام').to_dict(orient='dict')['بیمه گر']
+        df['comp'] = [insurec[x] for x in df['comp']]
         df = df.to_dict(orient='records')
         return json.dumps({'replay':True, 'df':df})
     else:

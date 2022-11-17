@@ -1,9 +1,8 @@
 import json
-from unicodedata import name
+
 import pymongo
 import pandas as pd
 from Sing import cookie, ErrorCookie
-import timedate
 
 client = pymongo.MongoClient()
 pishkarDb = client['pishkar']
@@ -60,6 +59,15 @@ def getcunsoltant(data):
         df = pd.DataFrame(pishkarDb['cunsoltant'].find({'username':username},{'_id':0,'fristName':1,'lastName':1,'nationalCode':1,'gender':1,'phone':1,'salary':1,'childern':1,'freetaxe':1,'salaryGroup':1,'insureWorker':1,'insureEmployer':1}))
         if len(df)==0:
             return json.dumps({'replay':False, 'msg':'هیچ مشاوری تعریف نشده'})
+        if 'active' not in df.columns: df['active'] = True
+        df['active'] = df['active'].fillna(True)
+        
+        try:
+            if data['FilterActive']!='all':
+                data['FilterActive'] = data['FilterActive']=='true'
+                df = df[df['active']==data['FilterActive']]
+        except:
+            pass
         df = df.fillna('')
         df = df.to_dict(orient='records')
         return json.dumps({'replay':True, 'df':df})
@@ -142,7 +150,7 @@ def getinsurer(data):
     user = json.loads(user)
     username = user['user']['phone']
     if user['replay']:
-        insurerList = pd.DataFrame((pishkarDb['insurer'].find({'username':username},{'_id':0,'نام':1})))
+        insurerList = pd.DataFrame((pishkarDb['insurer'].find({'username':username},{'_id':0,'نام':1,'بیمه گر':1})))
         insurerList = insurerList.to_dict(orient='records')
         return json.dumps({'replay':True, 'list':insurerList})
     else:
