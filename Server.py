@@ -15,7 +15,7 @@ import Pay
 import branche
 import issuing
 import winreg as reg
-
+import reports
 
 def addToReg():
     key = reg.OpenKey(reg.HKEY_CURRENT_USER , "Software\Microsoft\Windows\CurrentVersion\Run" ,0 , reg.KEY_ALL_ACCESS) # Open The Key
@@ -302,6 +302,38 @@ def issuing_addfile():
 def issuing_getdf():
     data = request.get_json()
     return issuing.getdf(data)
+
+@app.route('/inssuing/getcunsoltant',methods = ['POST', 'GET'])
+def issuing_get():
+    data = request.get_json()
+    return issuing.getcunsoltant(data)
+
+@app.route('/inssuing/assingcunsoltant',methods = ['POST', 'GET'])
+def issuing_assingcunsoltant():
+    data = request.get_json()
+    return issuing.assingcunsoltant(data)
+
+@app.route('/issuing/getissuingmanual',methods = ['POST', 'GET'])
+def issuing_getissuingmanual():
+    data = request.get_json()
+    return issuing.getissuingmanual(data)
+
+@app.route('/issuing/addissuingmanual',methods = ['POST', 'GET'])
+def issuing_addissuingmanual():
+    data = request.get_json()
+    return issuing.addissuingmanual(data)
+
+@app.route('/issuing/delfile',methods = ['POST', 'GET'])
+def issuing_delfile():
+    data = request.get_json()
+    return issuing.delfile(data)
+
+
+@app.route('/report/comparisom',methods = ['POST', 'GET'])
+def report_comparisom():
+    data = request.get_json()
+    return reports.comparisom(data)
+
 
 if __name__ == '__main__':
     #from waitress import serve

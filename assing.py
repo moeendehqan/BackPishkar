@@ -24,15 +24,15 @@ def get(data):
     user = json.loads(user)
     username = user['user']['phone']
     if user['replay']:
-        dicFildGet = {'_id':0,'comp':1,'بيمه گذار':1,'رشته':1,'مورد بیمه':1,'تاریخ صدور بیمه نامه':1,'شماره بيمه نامه':1}
+        dicFildGet = {'_id':0,'comp':1,'بيمه گذار':1,'رشته':1,'مورد بیمه':1,'تاریخ صدور بیمه نامه':1,'شماره بيمه نامه':1,'کد رایانه صدور':1}
         df = pd.DataFrame(pishkarDb['Fees'].find({'username':username},dicFildGet))
         df = df.drop_duplicates(subset="شماره بيمه نامه")
+        cl_consultant = pd.DataFrame(pishkarDb['cunsoltant'].find({'username':username}))
         if len(df)==0:
             return json.dumps({'replay':False,'msg':'هیچ فایل کارمزدی موجود نیست'})
         assing = pd.DataFrame(pishkarDb['assing'].find({'username':username},{'username':0,'_id':0}))
         if len(assing)>0:
             df = df.set_index('شماره بيمه نامه').join(assing.set_index('شماره بيمه نامه'),how='left').reset_index()
-            cl_consultant = pd.DataFrame(pishkarDb['cunsoltant'].find({'username':username}))
             df['consultant' ] = [NCtName(cl_consultant,x) for x in df['consultant']]
         else:
             df['consultant'] = 'بدون مشاور'
@@ -42,6 +42,15 @@ def get(data):
         insurec = pd.DataFrame(pishkarDb['insurer'].find({'username':username},{'نام':1,'بیمه گر':1,'_id':0}))
         insurec = insurec.set_index('نام').to_dict(orient='dict')['بیمه گر']
         df['comp'] = [insurec[x] for x in df['comp']]
+        dfissuing = pd.DataFrame(pishkarDb['AssingIssuing'].find({'username':username},{'_id':0,'username':0}))
+        if len(dfissuing)==0: df['issuing'] = ''
+        else:
+            df = df.set_index(['کد رایانه صدور','comp'])
+            dfissuing.columns = ['comp','کد رایانه صدور','issuing']
+            dfissuing = dfissuing.set_index(['comp','کد رایانه صدور'])
+            df = df.join(dfissuing,how='left')
+            df['issuing' ] = [NCtName(cl_consultant,x) for x in df['issuing']]
+            print(df)
         df = df.to_dict(orient='records')
         return json.dumps({'replay':True, 'df':df})
     else:

@@ -31,3 +31,26 @@ def timStumpTojalali(timeStump):
     kk = str(JalaliDate.fromtimestamp((int(timeStump)/1000)))
     kk = kk.replace('-','/')
     return kk
+
+def dateToPriod (date):
+    intDate = str(date).split('/')
+    year = intDate[0]
+    mondth = intDate[1].replace('01','اردیبهشت').replace('02','فروردین').replace('03','خرداد').replace('04','تیر').replace('05','مرداد').replace('06','شهریور').replace('07','مهر').replace('08','آبان').replace('09','آذر').replace('10','دی').replace('11','بهمن').replace('12','اسفند')
+    return year +' '+mondth
+
+def dateToInt (date):
+    intDate = str(date).split('/')
+    return int(intDate[0]+intDate[1]+intDate[2])
+
+def intToDate (date):
+    intDate = str(date)
+    return intDate[0:4]+'/'+intDate[4:6]+'/'+intDate[6:8]
+
+
+def dateToStandard (date):
+    intDate = str(date).split('/')
+    if len(intDate[1])==1:
+        intDate[1] = '0'+intDate[1]
+    if len(intDate[2])==1:
+        intDate[2] = '0'+intDate[2]
+    return intDate[0]+'/'+intDate[1]+'/'+intDate[2]

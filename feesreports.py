@@ -135,7 +135,19 @@ def getField(data):
         df['Field'] = df['رشته'] + ' '+ '('+ df['مورد بیمه'] + ')'
         df = [str(x).replace(' ()','') for x in df['Field']]
         df = list(set(df))
-        return json.dumps({'replay':True,'df':df})
+        GroupField = {
+                'بیمه آتش سوزی':['منازل مسکونی','خطرات غیر صنعتی','خطرات صنعتی'],
+                'بیمه باربری':['کالاهای وارداتی','کالاهای داخلی و صادراتی','باربری به نفع بانک'],
+                'بیمه وسائط نقلیه موتوری':['وسائط نقلیه سواری','بارکش','اتوبوس-مینی بوس','انواع موتورسیکلت، دوچرخه','ماشین آلات کشاورزی','ریلی'],
+                'بیمه مسئولیت':['بیمه اجباری شخص ثالث ','کشتی، شناور','متصدیان حمل و نقل','تعهد پرداخت حقوق گمرکی','سایر مسئولیت ها'],
+                'بیمه حوادث شخصی و درمان':['حوادث انفرادی','حوادث گروهی','درمان انفرادی','درمان گروهی','حوادث راننده','مسافرتی','دندان پزشکی انفرادی','دندان پزشکی گروهی'],
+                'اعتبار':['داخلی','صادرات کالا و حدمات'],
+                'کشاورزی':['درمان و تلف','محصولات زراعی و باغی'],
+                'سایر بیمه':['وجوه در صندوق و در حمل','عدم النفع','صداقت و امانت','مهندسی،عیوب ساختمان','وسایل نقلیه هوایی،حوادث خدمه','شناور و حوادث خدمه','اکتشاف و استخراج نفت','دزدی با شکست حرز','شکست شیشه','مرهونات به نفع بانک'],
+                'بیمه زندگی':['خطر فوت زمانی','شرط حیات','مختلط']
+            }
+        print(GroupField)
+        return json.dumps({'replay':True,'Field':df,'GroupField':GroupField})
     else:
         return ErrorCookie()
 
@@ -144,8 +156,19 @@ def addfield(data):
     user = json.loads(user)
     username = user['user']['phone']
     if user['replay']:
+        if data['GroupFieldSelected']['main']=='بیمه زندگی':
+            rate = ''
+            baseRateLive = data['RateFieldLive']['base']
+            firstFeeRateLive = data['RateFieldLive']['firstFee']
+            secendFeeRateLive = data['RateFieldLive']['secendFee']
+        else:
+            rate = data['rate']
+            baseRateLive = ''
+            firstFeeRateLive = ''
+            secendFeeRateLive = ''
+
         pishkarDb['standardfee'].delete_many({'username':username,'field':data['field'],'dateshow':data['date']['Show']})
-        pishkarDb['standardfee'].insert_one({'username':username,'field':data['field'],'rate':data['rate'],'dateshow':data['date']['Show'],'date':data['date']['date']})
+        pishkarDb['standardfee'].insert_one({'username':username,'field':data['field'],'rate':rate,'dateshow':data['date']['Show'],'date':data['date']['date'],'groupMain':data['GroupFieldSelected']['main'],'groupSub':data['GroupFieldSelected']['sub'],'baseRateLive':baseRateLive,'firstFeeRateLive':firstFeeRateLive,'secendFeeRateLive':secendFeeRateLive})
         return json.dumps({'replay':True})
     else:
         return ErrorCookie()
