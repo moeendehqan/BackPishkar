@@ -61,7 +61,6 @@ def getcunsoltant(data):
             return json.dumps({'replay':False, 'msg':'هیچ مشاوری تعریف نشده'})
         if 'active' not in df.columns: df['active'] = True
         df['active'] = df['active'].fillna(True)
-        
         try:
             if data['FilterActive']!='all':
                 data['FilterActive'] = data['FilterActive']=='true'
@@ -69,6 +68,7 @@ def getcunsoltant(data):
         except:
             pass
         df = df.fillna('')
+        print(df)
         df = df.to_dict(orient='records')
         return json.dumps({'replay':True, 'df':df})
     else:
@@ -207,27 +207,14 @@ def setsub(data):
     user = cookie(data)
     user = json.loads(user)
     username = user['user']['phone']
-
     if user['replay']:
-        if pishkarDb['sub'].find_one({'username':username,'subPhone':data['sub']['phone']}) ==None:
-            pishkarDb['sub'].insert_one({'username':username,'subPhone':data['sub']['phone'],'allowManagement':data['sub']['allowManagement'],'allowDesk':data['sub']['allowDesk']})
-            return json.dumps({'replay':True})
-        else:
-            return json.dumps({'replay':False})
-    else:
-        return ErrorCookie()
-
-def getsub(data):
-    user = cookie(data)
-    user = json.loads(user)
-    username = user['user']['phone']
-    if user['replay']:
-        df = pd.DataFrame(pishkarDb['sub'].find({'username':username},{'_id':0}))
-        if len(df)==0:
-            return json.dumps({'replay':False})
-        df = df.to_dict(orient='records')
-
-        return json.dumps({'replay':True,'df':df})
+        if pishkarDb['sub'].find_one({'username':username,'subPhone':data['sub']['phone']}) != None:
+            pishkarDb['sub'].delete_many({'username':username,'subPhone':data['sub']['phone']})
+        sub = data['sub']
+        sub['username'] = username
+        sub['subPhone'] = data['sub']['phone']
+        pishkarDb['sub'].insert_one(sub)
+        return json.dumps({'replay':True})
     else:
         return ErrorCookie()
 

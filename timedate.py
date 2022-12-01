@@ -54,3 +54,15 @@ def dateToStandard (date):
     if len(intDate[2])==1:
         intDate[2] = '0'+intDate[2]
     return intDate[0]+'/'+intDate[1]+'/'+intDate[2]
+
+
+def PriodStrToInt (date):
+    intDate = str(date).split('-')
+    try:
+        year = intDate[0]
+        mondth = intDate[1].replace('اردیبهشت','01').replace('فروردین','02').replace('خرداد','03').replace('تیر','04').replace('مرداد','05').replace('شهریور','06').replace('مهر','07').replace('آبان','08').replace('آذر','09').replace('دی','10').replace('بهمن','11').replace('اسفند','12')
+        dataInt = (year+mondth).replace(' ','')
+        dataInt = int(dataInt)
+        return dataInt
+    except:
+        return date

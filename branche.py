@@ -36,3 +36,19 @@ def addvalue(data):
         return json.dumps({'replay':True})
     else:
         return ErrorCookie()
+
+def copyPreviousMonth(data):
+    user = cookie(data)
+    user = json.loads(user)
+    username = user['user']['phone']
+    if user['replay']:
+        copy = pishkarDb['ValueBranche'].find_one(filter={'username':username,'name':data['Branches']},sort=[('dateTimeStump',-1)])
+        if copy == None:
+            return json.dumps({'replay':False, 'msg':'اطلاعاتی از ماه قبل یافت نشد'})
+        del copy['_id']
+        copy['dateShow'] = data['date']['Show']
+        copy['dateTimeStump'] = data['date']['date']
+        pishkarDb['ValueBranche'].insert_one(copy)
+        return json.dumps({'replay':True})
+    else:
+        return ErrorCookie()

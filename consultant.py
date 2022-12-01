@@ -2,6 +2,7 @@ import json
 import pymongo
 import pandas as pd
 from Sing import cookie, ErrorCookie
+import timedate
 client = pymongo.MongoClient()
 pishkarDb = client['pishkar']
 
@@ -72,6 +73,23 @@ def setatc(data):
         for i in act:
             pishkarDb['act'].delete_many({'username':username,'nationalCode':i['nationalCode'],'period':i['period']})
             pishkarDb['act'].insert_one({'username':username,'nationalCode':i['nationalCode'],'period':i['period'],'act':i['act']})
+        return json.dumps({'replay':True})
+    else:
+        return ErrorCookie()
+
+
+
+def actcopylastmonth(data):
+    user = cookie(data)
+    user = json.loads(user)
+    username = user['user']['phone']
+    if user['replay']:
+        copy = pd.DataFrame(pishkarDb['act'].find({'username':username},{'_id':0}))
+        copy['period'] = [timedate.PriodStrToInt(x) for x in copy['period']]
+        copy = copy[copy['period']==copy['period'].max()]
+        copy['period'] = data['date']['Show']
+        copy = copy.to_dict(orient='records')
+        pishkarDb['act'].insert_many(copy)
         return json.dumps({'replay':True})
     else:
         return ErrorCookie()

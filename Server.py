@@ -16,7 +16,7 @@ import branche
 import issuing
 import winreg as reg
 import reports
-
+import Authorization
 def addToReg():
     key = reg.OpenKey(reg.HKEY_CURRENT_USER , "Software\Microsoft\Windows\CurrentVersion\Run" ,0 , reg.KEY_ALL_ACCESS) # Open The Key
     reg.SetValueEx(key ,"any_name" , 0 , reg.REG_SZ , __file__)
@@ -122,10 +122,6 @@ def management_setsub():
     data = request.get_json()
     return management.setsub(data)
 
-@app.route('/management/getsub',methods = ['POST', 'GET'])
-def management_getsub():
-    data = request.get_json()
-    return management.getsub(data)
 
 @app.route('/management/getgroupsalary',methods = ['POST', 'GET'])
 def management_getgroupsalary():
@@ -147,6 +143,11 @@ def management_getbranche():
 def management_delbranche():
     data = request.get_json()
     return management.delbranche(data)
+
+@app.route('/branche/copypreviousmonth',methods = ['POST', 'GET'])
+def management_copyPreviousMonth():
+    data = request.get_json()
+    return branche.copyPreviousMonth(data)
 
 @app.route('/management/addminsalary',methods = ['POST', 'GET'])
 def management_addminsalary():
@@ -259,6 +260,12 @@ def consultant_getatc():
 def consultant_setatc():
     data = request.get_json()
     return consultant.setatc(data)
+
+@app.route('/consultant/actcopylastmonth',methods = ['POST', 'GET'])
+def consultant_actcopylastmonth():
+    data = request.get_json()
+    return consultant.actcopylastmonth(data)
+
 #----------------- Pay -----------------
 @app.route('/pay/get',methods = ['POST', 'GET'])
 def pay_get():
@@ -280,6 +287,11 @@ def pay_setbenefit():
     data = request.get_json()
     return Pay.setbenefit(data)
 
+@app.route('/benefit/copylastmonth',methods = ['POST', 'GET'])
+def pay_copylastmonth():
+    data = request.get_json()
+    return Pay.copylastmonth(data)
+
 #----------------- assing -----------------
 @app.route('/branche/getvalue',methods = ['POST', 'GET'])
 def branche_getvalue():
@@ -291,12 +303,13 @@ def branche_addvalue():
     data = request.get_json()
     return branche.addvalue(data)
 
-@app.route('/issuing/addfile',methods = ['POST', 'GET'])
-def issuing_addfile():
+@app.route('/issuing/cheackadditional',methods = ['POST', 'GET'])
+def issuing_CheackAdditional():
     cookie = request.form['cookie']
     file =  request.files['feesFile']
     comp = request.form['comp']
-    return issuing.addfile(cookie,file,comp)
+    additional = request.form['additional']
+    return issuing.CheackAdditional(cookie,file,comp,additional)
 
 @app.route('/issuing/getdf',methods = ['POST', 'GET'])
 def issuing_getdf():
@@ -328,12 +341,30 @@ def issuing_delfile():
     data = request.get_json()
     return issuing.delfile(data)
 
+@app.route('/issuing/getadditional',methods = ['POST', 'GET'])
+def issuing_getadditional():
+    data = request.get_json()
+    return issuing.getadditional(data)
+
+@app.route('/issuing/addaditional',methods = ['POST', 'GET'])
+def issuing_addaditional():
+    data = request.get_json()
+    return issuing.addaditional(data)
 
 @app.route('/report/comparisom',methods = ['POST', 'GET'])
 def report_comparisom():
     data = request.get_json()
     return reports.comparisom(data)
 
+@app.route('/authorization/lincenslist',methods = ['POST', 'GET'])
+def Authorization_lincenslist():
+    data = request.get_json()
+    return Authorization.lincenslist(data)
+
+@app.route('/authorization/getsub',methods = ['POST', 'GET'])
+def management_getsub():
+    data = request.get_json()
+    return Authorization.getsub(data)
 
 if __name__ == '__main__':
     #from waitress import serve

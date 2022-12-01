@@ -101,7 +101,7 @@ def get(data):
                         fixPay['reward'] = round(dfFees['fee'].sum())
                 berancheDF = pishkarDb['branches'].find_one({'username':username,'managementBranche':fixPay['nationalCode']})
                 if berancheDF!=None:
-                    valueBranche = pishkarDb['ValueBranche'].find_one({'username':username,'name':berancheDF['BranchesName']})
+                    valueBranche = pishkarDb['ValueBranche'].find_one({'username':username,'name':berancheDF['BranchesName'],'dateShow':data['period']['Show']})
                     if valueBranche!= None:
                         valueBrancheList = valueBranche['valueBranche']
                         for vb in valueBrancheList:
@@ -204,6 +204,23 @@ def setbenefit(data):
             pishkarDb['benefit'].delete_many({'username':username,'date':data['date']['Show']})
         df = pd.DataFrame(data['ListBenefit'])[['nationalCode','benefit']]
         df['username'] = username
+        df['date'] = data['date']['Show']
+        df['timestump'] = data['date']['date']
+        df = df.to_dict(orient='records')
+        pishkarDb['benefit'].insert_many(df)
+        return json.dumps({'replay':True})
+    else:
+        return ErrorCookie()
+
+def copylastmonth(data):
+    user = cookie(data)
+    user = json.loads(user)
+    username = user['user']['phone']
+    if user['replay']:
+        if pishkarDb['benefit'].find_one({'username':username,'date':data['date']['Show']})!=None:
+            pishkarDb['benefit'].delete_many({'username':username,'date':data['date']['Show']})
+        df = pd.DataFrame(pishkarDb['benefit'].find({'username':username},{'_id':0}))
+        df = df[df['timestump']==df['timestump'].max()]
         df['date'] = data['date']['Show']
         df['timestump'] = data['date']['date']
         df = df.to_dict(orient='records')

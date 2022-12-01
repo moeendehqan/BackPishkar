@@ -6,7 +6,6 @@ client = pymongo.MongoClient()
 pishkarDb = client['pishkar']
 
 
-
 def uploadfile(date,cookier,file,comp):
     user = cookie(cookier)
     user = json.loads(user)
@@ -14,8 +13,8 @@ def uploadfile(date,cookier,file,comp):
     if user['replay']:
         duplic = pd.DataFrame(pishkarDb['Fees'].find({'UploadDate':date,'comp':comp,'username':username}))
         if len(duplic) == 0:
-            df = pd.read_excel(file)
-            columns = (pishkarDb['insurer'].find_one({'username':username, 'نام':comp},{'_id':0, 'نام':0,'username':0}))
+            df = pd.read_excel(file, dtype={'شماره بيمه نامه':str})
+            columns = (pishkarDb['insurer'].find_one({'username':username, 'نام':comp},{'_id':0, 'نام':0,'username':0,'بیمه گر':0}))
             for i in columns:
                 if columns[i] in df.columns:
                     df.rename(columns={columns[i]:i})

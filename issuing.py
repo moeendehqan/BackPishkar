@@ -8,7 +8,11 @@ import timedate
 client = pymongo.MongoClient()
 pishkarDb = client['pishkar']
 
-def addfile(cookier,file,comp):
+
+
+
+
+def addfileNoneAdditional(cookier,file,comp):
     user = cookie(cookier)
     user = json.loads(user)
     username = user['user']['phone']
@@ -24,11 +28,9 @@ def addfile(cookier,file,comp):
                 return json.dumps({'replay':False,'msg':f'فایل فاقد ستون ضروری "{rc}" است'})
         df['comp'] = comp
         df['username'] = username
-
         beforDuplicatesLen = len(df)
         df = df.drop_duplicates(['کد رایانه صدور بیمه نامه','تاریخ سررسید'])
         AfterDuplicatesLen = len(df)
-
         if (beforDuplicatesLen!=AfterDuplicatesLen):
             msg = msg + f'{beforDuplicatesLen - AfterDuplicatesLen} رکورد تکراری بوده و حذف شده' +  '\n'
         dff = pd.DataFrame(pishkarDb['issuing'].find({'username':username,'comp':comp},{'_id':0,'کد رایانه صدور بیمه نامه':1,'تاریخ سررسید':1}))
@@ -43,11 +45,90 @@ def addfile(cookier,file,comp):
                 for d in dropList.index:
                     pishkarDb['issuing'].delete_one({'username':username,'comp':comp,'کد رایانه صدور بیمه نامه':int(dropList['کد رایانه صدور بیمه نامه'][d]),'تاریخ سررسید':dropList['تاریخ سررسید'][d]})
             df = df.drop(columns=['act'])
-
+        df['additional'] = 'اصلی'
         df = df.to_dict(orient='records')
         pishkarDb['issuing'].insert_many(df)
         msg = 'ثبت شد \n ' + msg
-        return json.dumps({'replay':True,'msg':msg})
+        return json.dumps({'replay':True,'additional':False,'msg':msg})
+    else:
+        return ErrorCookie()
+
+def addfilewitheAdditional(cookier,file,comp,additional):
+    user = cookie(cookier)
+    user = json.loads(user)
+    username = user['user']['phone']
+    if user['replay']:
+        df = pd.read_excel(file)
+        msg = ''
+        requiedCulomns = ['رشته','مورد بیمه','کد رایانه صدور بیمه نامه','پرداخت کننده حق بیمه',
+            'شماره بيمه نامه','تاريخ بيمه نامه يا الحاقيه','تاریخ عملیات','تاریخ سررسید',
+            'تاريخ سند دريافتي','وضعيت وصول','مبلغ کل حق بیمه','مبلغ تسویه شده','بدهی باقی مانده']
+        for rc in requiedCulomns:
+            inculomns = rc in df.columns
+            if inculomns==False:
+                return json.dumps({'replay':False,'msg':f'فایل فاقد ستون ضروری "{rc}" است'})
+        df['comp'] = comp
+        df['username'] = username
+        beforDuplicatesLen = len(df)
+        df = df.drop_duplicates(['کد رایانه صدور بیمه نامه','تاریخ سررسید'])
+        AfterDuplicatesLen = len(df)
+        if (beforDuplicatesLen!=AfterDuplicatesLen):
+            msg = msg + f'{beforDuplicatesLen - AfterDuplicatesLen} رکورد تکراری بوده و حذف شده' +  '\n'
+        dff = pd.DataFrame(pishkarDb['issuing'].find({'username':username,'comp':comp},{'_id':0,'کد رایانه صدور بیمه نامه':1,'تاریخ سررسید':1}))
+        if len(dff)>0:
+            dff['act'] = 1
+            df =df.set_index(['کد رایانه صدور بیمه نامه','تاریخ سررسید']).join(dff.set_index(['کد رایانه صدور بیمه نامه','تاریخ سررسید']))
+            df = df.reset_index()
+            duplicateLen = int(df['act'].sum())
+            if duplicateLen>0:
+                msg = msg + f'{duplicateLen} رکورد قبلا ثبت شده بود که بروز رسانی شد'
+                dropList = df[df['act']==1][['کد رایانه صدور بیمه نامه','تاریخ سررسید']]
+                for d in dropList.index:
+                    pishkarDb['issuing'].delete_one({'username':username,'comp':comp,'کد رایانه صدور بیمه نامه':int(dropList['کد رایانه صدور بیمه نامه'][d]),'تاریخ سررسید':dropList['تاریخ سررسید'][d]})
+            df = df.drop(columns=['act'])
+        df['additional'] = 'اصلی'
+        additionals = str(additional).split('},{')
+        additionals = [json.loads('{'+(x.replace('{','').replace('}',''))+'}') for x in additionals]
+        for i in df.index:
+            for j in additionals:
+                if df['comp'][i] == j['comp'] and df['کد رایانه صدور بیمه نامه'][i] == j['کد رایانه صدور بیمه نامه'] and df['شماره الحاقیه'][i] == j['شماره الحاقیه']:
+                    print('000000')
+                    df['additional'][i] = j['additional']
+        df = df.to_dict(orient='records')
+        pishkarDb['issuing'].insert_many(df)
+        msg = 'ثبت شد \n ' + msg
+        return json.dumps({'replay':True,'additional':False,'msg':msg})
+    else:
+        return ErrorCookie()
+
+def CheackAdditional(cookier,file,comp,additional):
+    user = cookie(cookier)
+    user = json.loads(user)
+    username = user['user']['phone']
+    if user['replay']:
+        df = pd.read_excel(file)
+        msg = ''
+        requiedCulomns = ['رشته','مورد بیمه','کد رایانه صدور بیمه نامه','پرداخت کننده حق بیمه',
+            'شماره بيمه نامه','شماره الحاقیه','تاريخ بيمه نامه يا الحاقيه','تاریخ عملیات','تاریخ سررسید',
+            'تاريخ سند دريافتي','وضعيت وصول','مبلغ کل حق بیمه','مبلغ تسویه شده','بدهی باقی مانده']
+        for rc in requiedCulomns:
+            inculomns = rc in df.columns
+            if inculomns==False:
+                return json.dumps({'replay':False,'msg':f'فایل فاقد ستون ضروری "{rc}" است'})
+        df['comp'] = comp
+        df['username'] = username
+        df = df[df['شماره الحاقیه']!=0]
+        print(df)
+        if len(df)==0:
+            return addfileNoneAdditional(cookier,file,comp)
+        if additional =='null':
+            df = df.drop_duplicates(['کد رایانه صدور بیمه نامه','تاریخ سررسید'])
+            df = df[['کد رایانه صدور بیمه نامه','شماره الحاقیه','comp']]
+            df['additional'] = 'اضافی'
+            df = df.to_dict(orient='records')
+            return json.dumps({'replay':True,'additional':df})
+        else:
+            return addfilewitheAdditional(cookier,file,comp,additional)
     else:
         return ErrorCookie()
 
@@ -59,14 +140,19 @@ def getdf(data):
         df = pd.DataFrame(pishkarDb['issuing'].find({'username':username},{'_id':0}))
         if len(df)==0:
             return json.dumps({'replay':False})
-        df = df[['تاریخ عملیات','مبلغ کل حق بیمه','comp']]
+        df = df[['تاریخ عملیات','مبلغ کل حق بیمه','comp','کد رایانه صدور بیمه نامه']]
         df = df.fillna('')
         df['دوره عملیات'] = [timedate.dateToPriod(x) for x in df['تاریخ عملیات']]
         df['تعداد'] = 1
         df['تاریخ عملیات عددی'] = [timedate.dateToInt(x) for x in df['تاریخ عملیات']]
-        dff = df.groupby(by=['دوره عملیات','comp']).sum().drop(columns=['تاریخ عملیات عددی'])
+        dfcount = df.drop_duplicates(subset=['کد رایانه صدور بیمه نامه'])
+        dfcount['count'] = 1
+        dfcount = dfcount.groupby(by=['دوره عملیات','comp']).sum()[['count','مبلغ کل حق بیمه']]
+        dff = df.groupby(by=['دوره عملیات','comp']).sum().drop(columns=['تاریخ عملیات عددی','مبلغ کل حق بیمه'])
         dff['از تاریخ'] = df.groupby(by=['دوره عملیات','comp']).min()['تاریخ عملیات عددی']
         dff['تا تاریخ'] = df.groupby(by=['دوره عملیات','comp']).max()['تاریخ عملیات عددی']
+        dff = dff.join(dfcount)
+        dff = dff.dropna()
         dff = dff.reset_index()
         dff['از تاریخ'] = [timedate.intToDate(x) for x in dff['از تاریخ']]
         dff['تا تاریخ'] = [timedate.intToDate(x) for x in dff['تا تاریخ']]
@@ -139,6 +225,7 @@ def addissuingmanual(data):
     username = user['user']['phone']
     if user['replay']:
         IssuingDict = data['IssuingDict']
+        IssuingDict['additional'] = 'اصلی'
         try:
             IssuingDict['مبلغ کل حق بیمه'] = int(IssuingDict['مبلغ کل حق بیمه'])
             IssuingDict['مبلغ تسویه شده'] = int(IssuingDict['مبلغ تسویه شده'])
@@ -173,5 +260,39 @@ def delfile(data):
         for i in df.index:
             pishkarDb['issuing'].delete_one({'_id':df['_id'][i]})
         return json.dumps({'replay':True})
+    else:
+        return ErrorCookie()
+
+def getadditional(data):
+    user = cookie(data)
+    user = json.loads(user)
+    username = user['user']['phone']
+    if user['replay']:
+        df = pd.DataFrame(pishkarDb['issuing'].find({'username':username},{'_id':0,'شماره بيمه نامه':1,'رشته':1,'کد رایانه صدور بیمه نامه':1,'مورد بیمه':1,'پرداخت کننده حق بیمه':1,'additional':1,'تاريخ بيمه نامه يا الحاقيه':1,'مبلغ کل حق بیمه':1,'comp':1}))
+        if len(df)==0:
+            return json.dumps({'replay':False, 'msg':'هیچ بیمه نامه ای یافت نشد'})
+        add = df[df['additional']!='اصلی']
+        add['count'] = 1
+        add = add.groupby(by=['کد رایانه صدور بیمه نامه','comp']).sum()
+        add = add[['count']]
+        df = df.drop_duplicates(subset=['comp','کد رایانه صدور بیمه نامه'])
+        df = df[df['additional']=='اصلی']
+        df = df.set_index(['کد رایانه صدور بیمه نامه','comp'])
+        df = df.join(add,how='left')
+        df['count'] = df['count'].fillna(0)
+        df = df.reset_index()
+        print(df)
+        df = df.fillna('')
+        df = df.to_dict(orient='records')
+        return json.dumps({'replay':True,'df':df})
+    else:
+        return ErrorCookie()
+
+def addaditional(data):
+    user = cookie(data)
+    user = json.loads(user)
+    username = user['user']['phone']
+    if user['replay']:
+        pass
     else:
         return ErrorCookie()
