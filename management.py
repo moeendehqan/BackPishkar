@@ -67,8 +67,15 @@ def getcunsoltant(data):
                 df = df[df['active']==data['FilterActive']]
         except:
             pass
+        print(data)
         df = df.fillna('')
-        print(df)
+        try:
+            if data['integration']==False:
+                df = df[df['gender']!='گروه']
+                df = df[df['fristName']!='تلفیق']
+        except:
+            df = df[df['gender']!='گروه']
+            df = df[df['fristName']!='تلفیق']
         df = df.to_dict(orient='records')
         return json.dumps({'replay':True, 'df':df})
     else:

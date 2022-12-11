@@ -10,6 +10,7 @@ pishkarDb = client['pishkar']
 def NCtName(cl,nc):
     if str(nc)!='nan':
         df = cl[cl['nationalCode']==nc]
+        df['nationalCode'] = [str(x) for x in df['nationalCode'] ]
         if len(df)>0:
             df['full'] = df['gender'] +' '+ df['fristName'] +' '+ df['lastName']
             df = df['full'][df.index.max()]
@@ -25,12 +26,13 @@ def get(data):
     username = user['user']['phone']
     if user['replay']:
         dicFildGet = {'_id':0,'comp':1,'بيمه گذار':1,'رشته':1,'مورد بیمه':1,'تاریخ صدور بیمه نامه':1,'شماره بيمه نامه':1,'کد رایانه صدور':1}
-        df = pd.DataFrame(pishkarDb['Fees'].find({'username':username},dicFildGet))
+        df = pd.DataFrame(pishkarDb['Fees'].find({'username':username,'UploadDate':data['datePeriod']['Show']},dicFildGet))
         df = df.drop_duplicates(subset="شماره بيمه نامه")
-        cl_consultant = pd.DataFrame(pishkarDb['cunsoltant'].find({'username':username}))
+        cl_consultant = pd.DataFrame(pishkarDb['cunsoltant'].find({'username':username},{'_id':0,'ConsultantSelected':0}))
         if len(df)==0:
             return json.dumps({'replay':False,'msg':'هیچ فایل کارمزدی موجود نیست'})
         assing = pd.DataFrame(pishkarDb['assing'].find({'username':username},{'username':0,'_id':0}))
+        assing['consultant'] = [str(x) for x in assing['consultant']]
         if len(assing)>0:
             df = df.set_index('شماره بيمه نامه').join(assing.set_index('شماره بيمه نامه'),how='left').reset_index()
             df['consultant' ] = [NCtName(cl_consultant,x) for x in df['consultant']]
@@ -50,7 +52,6 @@ def get(data):
             dfissuing = dfissuing.set_index(['comp','کد رایانه صدور'])
             df = df.join(dfissuing,how='left')
             df['issuing' ] = [NCtName(cl_consultant,x) for x in df['issuing']]
-            print(df)
         df = df.to_dict(orient='records')
         return json.dumps({'replay':True, 'df':df})
     else:

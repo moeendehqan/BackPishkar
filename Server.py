@@ -17,6 +17,7 @@ import issuing
 import winreg as reg
 import reports
 import Authorization
+import dashboard
 def addToReg():
     key = reg.OpenKey(reg.HKEY_CURRENT_USER , "Software\Microsoft\Windows\CurrentVersion\Run" ,0 , reg.KEY_ALL_ACCESS) # Open The Key
     reg.SetValueEx(key ,"any_name" , 0 , reg.REG_SZ , __file__)
@@ -266,6 +267,26 @@ def consultant_actcopylastmonth():
     data = request.get_json()
     return consultant.actcopylastmonth(data)
 
+@app.route('/consultant/forcastfee',methods = ['POST', 'GET'])
+def consultant_forcastfee():
+    data = request.get_json()
+    return consultant.forcastfee(data)
+
+@app.route('/consultant/addintegration',methods = ['POST', 'GET'])
+def consultant_addintegration():
+    data = request.get_json()
+    return consultant.addintegration(data)
+
+@app.route('/consultant/getintegration',methods = ['POST', 'GET'])
+def consultant_getintegration():
+    data = request.get_json()
+    return consultant.getintegration(data)
+
+@app.route('/consultant/delintegration',methods = ['POST', 'GET'])
+def consultant_delintegration():
+    data = request.get_json()
+    return consultant.delintegration(data)
+
 #----------------- Pay -----------------
 @app.route('/pay/get',methods = ['POST', 'GET'])
 def pay_get():
@@ -336,6 +357,11 @@ def issuing_addissuingmanual():
     data = request.get_json()
     return issuing.addissuingmanual(data)
 
+@app.route('/issuing/delissuingmanual',methods = ['POST', 'GET'])
+def issuing_delissuingmanual():
+    data = request.get_json()
+    return issuing.delissuingmanual(data)
+
 @app.route('/issuing/delfile',methods = ['POST', 'GET'])
 def issuing_delfile():
     data = request.get_json()
@@ -365,6 +391,41 @@ def Authorization_lincenslist():
 def management_getsub():
     data = request.get_json()
     return Authorization.getsub(data)
+
+@app.route('/dashboard/issunigsum',methods = ['POST', 'GET'])
+def dashboard_issunigSum():
+    data = request.get_json()
+    return dashboard.issunigSum(data)
+
+@app.route('/dashboard/feesum',methods = ['POST', 'GET'])
+def dashboard_feeSum():
+    data = request.get_json()
+    return dashboard.FeeSum(data)
+
+@app.route('/dashboard/issunigFeild',methods = ['POST', 'GET'])
+def dashboard_issunigFeild():
+    data = request.get_json()
+    return dashboard.issunigFeild(data)
+
+@app.route('/dashboard/issuniginsurer',methods = ['POST', 'GET'])
+def dashboard_issuniginsurer():
+    data = request.get_json()
+    return dashboard.issuniginsurer(data)
+
+@app.route('/dashboard/feesum',methods = ['POST', 'GET'])
+def dashboard_FeeSum():
+    data = request.get_json()
+    return dashboard.FeeSum(data)
+
+@app.route('/dashboard/feefeild',methods = ['POST', 'GET'])
+def dashboard_FeeFeild():
+    data = request.get_json()
+    return dashboard.FeeFeild(data)
+
+@app.route('/dashboard/feeinsurence',methods = ['POST', 'GET'])
+def dashboard_FeeInsurence():
+    data = request.get_json()
+    return dashboard.FeeInsurence(data)
 
 if __name__ == '__main__':
     #from waitress import serve

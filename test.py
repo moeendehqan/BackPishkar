@@ -6,7 +6,14 @@ import numpy as np
 client = pymongo.MongoClient()
 pishkarDb = client['pishkar']
 
-fee = pd.DataFrame(pishkarDb['Fees'].find({'comp':'کارآفرین 1'}))
+fee = pd.DataFrame(pishkarDb['issuing'].find())
+fee = fee.fillna(0)
+fee = fee[fee['شماره الحاقیه']>0]
+print(fee)
 for i in fee.index:
-    print(i)
-    pishkarDb['Fees'].update_one({'_id':fee['_id'][i]},{'$set':{'comp':'کارآفرین'}})
+    pishkarDb['issuing'].delete_one({'_id':fee['_id'][i]})
+
+
+pishkarDb['issuing'].update_many({},{'$set':{'additional':'اصلی'}})
+fee = pd.DataFrame(pishkarDb['issuing'].find())
+print(fee)

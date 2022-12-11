@@ -106,7 +106,8 @@ def CheackAdditional(cookier,file,comp,additional):
     user = json.loads(user)
     username = user['user']['phone']
     if user['replay']:
-        df = pd.read_excel(file)
+        try:df = pd.read_excel(file)
+        except: return json.dumps({'replay':False,'msg':'خطا، فایل دارای ایراد است'})
         msg = ''
         requiedCulomns = ['رشته','مورد بیمه','کد رایانه صدور بیمه نامه','پرداخت کننده حق بیمه',
             'شماره بيمه نامه','شماره الحاقیه','تاريخ بيمه نامه يا الحاقيه','تاریخ عملیات','تاریخ سررسید',
@@ -212,7 +213,7 @@ def getissuingmanual(data):
     if user['replay']:
         df = pd.DataFrame(pishkarDb['issuing'].find({'username':username}))
         if len(df)>0:
-            df = df[['رشته','کد رایانه صدور بیمه نامه','مورد بیمه','پرداخت کننده حق بیمه','شماره بيمه نامه','تاريخ بيمه نامه يا الحاقيه','تاریخ عملیات','تاریخ سررسید','مبلغ کل حق بیمه','مبلغ تسویه شده','بدهی باقی مانده','comp']]
+            df = df[['رشته','کد رایانه صدور بیمه نامه','مورد بیمه','پرداخت کننده حق بیمه','شماره بيمه نامه','تاريخ بيمه نامه يا الحاقيه','تاریخ عملیات','تاریخ سررسید','مبلغ کل حق بیمه','مبلغ تسویه شده','بدهی باقی مانده','comp','additional']]
         df = df.fillna('')
         df = df.to_dict(orient='records')
         return json.dumps({'replay':True,'df':df})
@@ -225,7 +226,6 @@ def addissuingmanual(data):
     username = user['user']['phone']
     if user['replay']:
         IssuingDict = data['IssuingDict']
-        IssuingDict['additional'] = 'اصلی'
         try:
             IssuingDict['مبلغ کل حق بیمه'] = int(IssuingDict['مبلغ کل حق بیمه'])
             IssuingDict['مبلغ تسویه شده'] = int(IssuingDict['مبلغ تسویه شده'])
@@ -241,7 +241,7 @@ def addissuingmanual(data):
         IssuingDict['username'] = username
         dupl = pishkarDb['issuing'].find_one({'username':username,'comp':IssuingDict['comp'],'کد رایانه صدور بیمه نامه':IssuingDict['کد رایانه صدور بیمه نامه'],'تاریخ سررسید':IssuingDict['تاریخ سررسید']})
         if dupl!=None:
-            return json.dumps({'replay':False,'msg':'این صدور قبلا ثبت شده است'})
+            pishkarDb['issuing'].delete_many({'username':username,'comp':IssuingDict['comp'],'کد رایانه صدور بیمه نامه':IssuingDict['کد رایانه صدور بیمه نامه'],'تاریخ سررسید':IssuingDict['تاریخ سررسید']})
         pishkarDb['issuing'].insert_one(IssuingDict)
         return json.dumps({'replay':True})
     else:
@@ -262,6 +262,17 @@ def delfile(data):
         return json.dumps({'replay':True})
     else:
         return ErrorCookie()
+
+def delissuingmanual(data):
+    user = cookie(data)
+    user = json.loads(user)
+    username = user['user']['phone']
+    if user['replay']:
+        pishkarDb['issuing'].delete_many({'username':username,'comp':data['dict']['comp'],'کد رایانه صدور بیمه نامه':data['dict']['کد رایانه صدور بیمه نامه'],'تاریخ سررسید':data['dict']['تاریخ سررسید'],'شماره بيمه نامه':data['dict']['شماره بيمه نامه']})
+        return json.dumps({'replay':True})
+    else:
+        return ErrorCookie()
+
 
 def getadditional(data):
     user = cookie(data)
@@ -293,6 +304,21 @@ def addaditional(data):
     user = json.loads(user)
     username = user['user']['phone']
     if user['replay']:
-        pass
+        additionalDict = data['additionalDict']
+        df = pishkarDb['issuing'].find_one({'username':username,'کد رایانه صدور بیمه نامه': additionalDict['کد رایانه صدور بیمه نامه'], 'comp':additionalDict['comp']},{'_id':0})
+        df['additional'] = additionalDict['additional']
+        if(additionalDict['additional']=='برگشتی'):
+            if(additionalDict['مبلغ کل حق بیمه']>df['مبلغ کل حق بیمه']):
+                return json.dumps({'replay':True,'msg':'حق بیمه الحاقیه برگشتی نمیتواند بیشتر از حق بیمه اصلی باشد'})
+        df['مبلغ کل حق بیمه'] = additionalDict['مبلغ کل حق بیمه']
+        df['مبلغ تسویه شده'] = additionalDict['مبلغ تسویه شده']
+        df['بدهی باقی مانده'] = additionalDict['بدهی باقی مانده']
+        df['تاریخ سررسید'] = additionalDict['تاریخ سررسید']
+        df['تاریخ عملیات'] = additionalDict['تاریخ عملیات']
+        df['تاريخ بيمه نامه يا الحاقيه'] = additionalDict['تاريخ بيمه نامه يا الحاقيه']
+        df['شماره الحاقیه'] = additionalDict['شماره الحاقیه']
+        df['شماره بيمه نامه'] = additionalDict['شماره بيمه نامه']
+        pishkarDb['issuing'].insert_one(df)
+        return json.dumps({'replay':True})
     else:
         return ErrorCookie()

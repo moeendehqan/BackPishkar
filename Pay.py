@@ -88,7 +88,7 @@ def get(data):
                 dfFees['تاریخ صدور بیمه نامه'] = [timedate.diffTime2(x) for x in dfFees['تاریخ صدور بیمه نامه']]
                 dfFees = dfFees[dfFees['تاریخ صدور بیمه نامه']<=1825]
                 assing = pd.DataFrame(pishkarDb['assing'].find({'username':username,'consultant':c['nationalCode']},{'_id':0,'username':0}))
-                if len(assing)==0: fixPay['reward'] = 0
+                if len(assing)==0:fixPay['reward'] = 0
                 else:
                     dfFees = dfFees.join(assing.set_index('شماره بيمه نامه'),how='left')
                     dfFees = dfFees.dropna(subset=['consultant'])
@@ -106,7 +106,6 @@ def get(data):
                         valueBrancheList = valueBranche['valueBranche']
                         for vb in valueBrancheList:
                             fixPay[vb['title']] = vb['value']
-
                 df = df.append(fixPay,ignore_index=True)
         df = df.fillna(0)
         df['SubReward'] = 0
@@ -124,6 +123,21 @@ def get(data):
             df = df.set_index('nationalCode').join(benefit,how='left').reset_index().fillna(0)
         else:
             df['benefit'] = 0
+
+        integrations = [x for x in consultantList if x['fristName']=='تلفیق']
+        df = df.set_index('nationalCode')
+        for i in integrations:
+            nationalCode = i['nationalCode']
+            mony = df['reward'][nationalCode]
+            if mony >0:
+                consultantSelect = i['ConsultantSelected']
+                for j in consultantSelect:
+                    share = round((int(j['fee'])/100) * mony)
+                    nationalCodeSelect = j['code']
+                    df['reward'][nationalCodeSelect] = df['reward'][nationalCodeSelect] + share
+            df = df.drop(nationalCode)
+        df = df.reset_index()
+
         df['benefit'] = [float(x) for x in df['benefit']]
         df['paybeforTax'] = df['paybeforTax'] + df['benefit']
         df['afterPay'] = df['paybeforTax'] - df['taxe'] + df['freeTaxe'] - df['insuranceWorker']
@@ -137,6 +151,8 @@ def get(data):
         for i in addedList:
             df[i] = [float(x) for x in df[i]]
             df['PayBalance'] = df['PayBalance'] + df[i]
+        
+
         return json.dumps({'replay':True,'pay':df.to_dict(orient='records')})
     else:
         return ErrorCookie()
@@ -183,6 +199,7 @@ def getbenefit(data):
     if user['replay']:
         dfBenefit = pd.DataFrame(pishkarDb['benefit'].find({'username':username,'date':data['today']['Show']},{'_id':0,'nationalCode':1,'benefit':1}))
         dfConsultant = pd.DataFrame(pishkarDb['cunsoltant'].find({'username':username},{'_id':0,'fristName':1,'lastName':1,'nationalCode':1}))
+        dfConsultant = dfConsultant[dfConsultant['fristName']!='تلفیق']
         if len(dfConsultant)==0:
             return json.dumps({'replay':False,'msg':'هیچ مشاوری یافت نشد'})
         if len(dfBenefit)==0:
